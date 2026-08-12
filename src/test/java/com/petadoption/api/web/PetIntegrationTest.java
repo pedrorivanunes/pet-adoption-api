@@ -5,7 +5,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -199,16 +198,4 @@ class PetIntegrationTest extends AbstractIntegrationTest {
 				.andExpect(status().isBadRequest());
 	}
 
-	// ----------------------------------------------------------------- apoio --
-
-	private long createPet(String token, String name) throws Exception {
-		String response = mockMvc.perform(post("/api/pets")
-						.header("Authorization", bearer(token))
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(body(new LinkedHashMap<>(petPayload(name)))))
-				.andExpect(status().isCreated())
-				.andReturn().getResponse().getContentAsString();
-
-		return json.readTree(response).get("id").longValue();
-	}
 }

@@ -75,6 +75,7 @@ Autenticação:
 | `POST` | `/api/auth/login` | público |
 | `GET` | `/api/users/me` | autenticado |
 | `GET` | `/api/users/me/pets` | autenticado |
+| `GET` · `PUT` | `/api/users/me/adopter-profile` | autenticado (PUT é idempotente) |
 
 Pets — o catálogo é público, o resto exige permissão sobre o animal:
 
@@ -96,6 +97,17 @@ Organizações — leitura pública, escrita conforme o vínculo:
 | `PUT` · `DELETE` | `/api/organizations/{id}` | ADMIN da organização |
 | `GET` | `/api/organizations/{id}/members` | membro da organização |
 | `POST` · `PUT` · `DELETE` | `/api/organizations/{id}/members[/{userId}]` | ADMIN da organização |
+
+Adoção — candidatar-se é do adotante, decidir é de quem cuida do pet:
+
+| Método | Rota | Acesso |
+|---|---|---|
+| `POST` | `/api/adoptions/applications` | autenticado, com perfil de adotante |
+| `GET` | `/api/adoptions/applications/me` | autenticado |
+| `GET` | `/api/adoptions/applications/{id}` | candidato ou quem administra o pet |
+| `GET` | `/api/pets/{id}/applications` | quem administra o pet |
+| `POST` | `/api/adoptions/applications/{id}/approve` · `/reject` | quem administra o pet |
+| `POST` | `/api/adoptions/applications/{id}/cancel` | o próprio candidato |
 
 ```bash
 curl -X POST http://localhost:8080/api/auth/register -H 'Content-Type: application/json' -d '{"name":"Ana","email":"ana@example.com","password":"senha-super-secreta"}'
@@ -196,6 +208,20 @@ devesse ser privada. Os padrões usam `/api/pets/*`, que casa só o nível do
 recurso. E "meus pets" mora em `/api/users/me/pets`, fora da árvore pública, em
 vez de `/api/pets/me`, onde dependeria da ordem das regras para não vazar.
 
+**"Um pet por vez" é um índice único parcial, não um `if`.**
+A regra de que cada pessoa busca um animal de cada vez vive num índice único
+sobre `adopter_user_id` **filtrado por `status = 'PENDING'`** — candidaturas
+passadas não bloqueiam novas. O serviço também confere, mas só para devolver
+mensagem compreensível: verificar-e-depois-inserir em código perde para duas
+requisições simultâneas, e o índice não perde.
+
+**Aprovar uma candidatura é um evento, não a edição de um campo.**
+Por isso é `POST /{id}/approve` e não um `PATCH` de status: numa transação só, a
+candidatura é decidida, o pet vira adotado, a adoção entra no histórico e os
+demais candidatos são recusados com justificativa. Quebrado em chamadas
+separadas, existiria uma janela com o pet já adotado e gente ainda esperando
+resposta — ou duas aprovações para o mesmo animal.
+
 **Organização nunca fica sem administrador.**
 O último ADMIN não consegue se rebaixar nem se remover. Sem essa trava, a
 organização continua existindo sem ninguém que possa administrá-la, e não há
@@ -222,8 +248,8 @@ Em construção. O que já está de pé:
 - [x] Teste de integração validando as migrations em banco limpo
 - [x] Autenticação JWT: cadastro, login e rota autenticada
 - [x] Pets e organizações: CRUD com autorização por vínculo
-- [ ] Perfil e preferências do adotante
-- [ ] Fluxo de adoção (candidatura → decisão → adoção efetivada)
+- [x] Perfil e preferências do adotante
+- [x] Fluxo de adoção (candidatura → decisão → adoção efetivada)
 - [ ] Histórico de rastreabilidade
 - [ ] Cálculo de compatibilidade e busca ranqueada
 - [ ] Acompanhamento pós-adoção

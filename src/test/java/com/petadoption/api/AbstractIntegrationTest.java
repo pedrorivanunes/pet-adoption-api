@@ -71,6 +71,27 @@ public abstract class AbstractIntegrationTest {
 		return json.readTree(response).get("id").longValue();
 	}
 
+	protected long createPet(String token, String name) throws Exception {
+		String response = mockMvc.perform(post("/api/pets")
+						.header("Authorization", bearer(token))
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(body(petPayload(name))))
+				.andExpect(status().isCreated())
+				.andReturn().getResponse().getContentAsString();
+
+		return json.readTree(response).get("id").longValue();
+	}
+
+	/** Perfil mínimo válido — o suficiente para poder se candidatar. */
+	protected void saveAdopterProfile(String token) throws Exception {
+		mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+						.put("/api/users/me/adopter-profile")
+						.header("Authorization", bearer(token))
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(body(Map.of("housingType", "HOUSE"))))
+				.andExpect(status().isOk());
+	}
+
 	protected Map<String, Object> petPayload(String name) {
 		Map<String, Object> payload = new LinkedHashMap<>();
 		payload.put("name", name);

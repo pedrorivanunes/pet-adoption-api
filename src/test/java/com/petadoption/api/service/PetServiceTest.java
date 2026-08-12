@@ -6,6 +6,7 @@ import com.petadoption.api.domain.PetSex;
 import com.petadoption.api.domain.PetSize;
 import com.petadoption.api.domain.PetStatus;
 import com.petadoption.api.domain.User;
+import com.petadoption.api.repository.AdoptionRepository;
 import com.petadoption.api.repository.OrganizationRepository;
 import com.petadoption.api.repository.PetRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,8 +32,9 @@ class PetServiceTest {
 
 	private PetRepository pets;
 	private OrganizationRepository organizations;
+	private AdoptionRepository adoptions;
 	private UserService users;
-	private OrganizationAccess access;
+	private OrganizationAccess organizationAccess;
 	private PetService service;
 
 	private User actor;
@@ -41,9 +43,15 @@ class PetServiceTest {
 	void setUp() {
 		pets = mock(PetRepository.class);
 		organizations = mock(OrganizationRepository.class);
+		adoptions = mock(AdoptionRepository.class);
 		users = mock(UserService.class);
-		access = mock(OrganizationAccess.class);
-		service = new PetService(pets, organizations, users, access);
+		organizationAccess = mock(OrganizationAccess.class);
+
+		// PetAccess é lógica pura, sem colaborador externo além do acesso a
+		// organizações: usar a implementação real aqui testa a regra de dono de
+		// verdade, em vez de um dublê que sempre concorda.
+		PetAccess petAccess = new PetAccess(organizationAccess);
+		service = new PetService(pets, organizations, adoptions, users, organizationAccess, petAccess);
 
 		actor = new User();
 		actor.setId(1L);
@@ -80,7 +88,7 @@ class PetServiceTest {
 
 		Pet pet = service.create(data("Thor", null), 7L, "ator@example.com");
 
-		verify(access).requireMember(7L, actor);
+		verify(organizationAccess).requireMember(7L, actor);
 		assertThat(pet.getOwnerOrg()).isSameAs(organization);
 		assertThat(pet.getOwnerUser()).isNull();
 	}

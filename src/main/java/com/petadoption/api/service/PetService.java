@@ -6,11 +6,11 @@ import com.petadoption.api.domain.PetSex;
 import com.petadoption.api.domain.PetSize;
 import com.petadoption.api.domain.PetStatus;
 import com.petadoption.api.domain.User;
+import com.petadoption.api.repository.AdoptionRepository;
 import com.petadoption.api.repository.OrganizationRepository;
 import com.petadoption.api.repository.PetRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,15 +22,19 @@ public class PetService {
 
 	private final PetRepository pets;
 	private final OrganizationRepository organizations;
+	private final AdoptionRepository adoptions;
 	private final UserService users;
-	private final OrganizationAccess access;
+	private final OrganizationAccess organizationAccess;
+	private final PetAccess petAccess;
 
-	public PetService(PetRepository pets, OrganizationRepository organizations, UserService users,
-			OrganizationAccess access) {
+	public PetService(PetRepository pets, OrganizationRepository organizations, AdoptionRepository adoptions,
+			UserService users, OrganizationAccess organizationAccess, PetAccess petAccess) {
 		this.pets = pets;
 		this.organizations = organizations;
+		this.adoptions = adoptions;
 		this.users = users;
-		this.access = access;
+		this.organizationAccess = organizationAccess;
+		this.petAccess = petAccess;
 	}
 
 	public record PetData(
@@ -73,7 +77,7 @@ public class PetService {
 		if (ownerOrganizationId != null) {
 			Organization organization = organizations.findById(ownerOrganizationId)
 					.orElseThrow(() -> NotFoundException.of("Organização", ownerOrganizationId));
-			access.requireMember(ownerOrganizationId, actor);
+			organizationAccess.requireMember(ownerOrganizationId, actor);
 			pet.setOwnerOrg(organization);
 		}
 		else {
@@ -111,7 +115,7 @@ public class PetService {
 	@Transactional
 	public Pet update(Long id, PetData data, String actorEmail) {
 		Pet pet = getById(id);
-		requireCanManage(pet, users.getByEmail(actorEmail));
+		petAccess.requireCanManage(pet, users.getByEmail(actorEmail));
 
 		PetStatus requested = data.status() != null ? data.status() : pet.getStatus();
 		if (pet.getStatus().isTerminal() && requested != pet.getStatus()) {
@@ -126,27 +130,20 @@ public class PetService {
 	@Transactional
 	public void delete(Long id, String actorEmail) {
 		Pet pet = getById(id);
-		requireCanManage(pet, users.getByEmail(actorEmail));
+		petAccess.requireCanManage(pet, users.getByEmail(actorEmail));
+
+		// A adoção é histórico e aponta para o pet com RESTRICT: o banco já
+		// recusaria o delete. Detectar aqui troca um erro de constraint cru por
+		// uma explicação de por que a operação não faz sentido.
+		if (adoptions.existsByPet_Id(id)) {
+			throw new ConflictException(
+					"Este pet tem adoção registrada e não pode ser removido — o histórico depende dele.");
+		}
+
 		pets.delete(pet);
 	}
 
 	// ======================================================== apoio ==========
-
-	/**
-	 * Pet de pessoa só o dono administra; pet de organização, qualquer membro
-	 * dela (ADMIN ou STAFF), porque cuidar dos animais é justamente o trabalho
-	 * do staff.
-	 */
-	private void requireCanManage(Pet pet, User actor) {
-		if (pet.isOwnedByOrganization()) {
-			access.requireMember(pet.getOwnerOrg().getId(), actor);
-			return;
-		}
-
-		if (!pet.getOwnerUser().getId().equals(actor.getId())) {
-			throw new AccessDeniedException("Este pet pertence a outra pessoa");
-		}
-	}
 
 	private void apply(Pet pet, PetData data) {
 		pet.setName(data.name().trim());
