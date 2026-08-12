@@ -25,6 +25,19 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
+  mvc:
+    problemdetails:
+      enabled: true
+
+# Sem valor padrão de propósito: sem JWT_SECRET no ambiente, a aplicação não
+# sobe. É preferível falhar no boot, com mensagem clara, a subir assinando
+# tokens com um segredo de exemplo que alguém esqueceu de trocar.
+app:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:}
+      ttl: PT4H
+
 server:
   port: ${SERVER_PORT:8080}
 

@@ -33,6 +33,9 @@ services:
       DB_URL: jdbc:postgresql://db:5432/${DB_NAME:-pet_adoption}
       DB_USERNAME: ${DB_USER:-petuser}
       DB_PASSWORD: ${DB_PASSWORD:-petpass}
+      # Valor de desenvolvimento. Em qualquer ambiente real, defina JWT_SECRET
+      # no ambiente: este default existe só para o compose subir sem cerimônia.
+      JWT_SECRET: ${JWT_SECRET:-desenvolvimento-local-troque-este-segredo-agora}
     ports:
       - "8080:8080"
     restart: on-failure

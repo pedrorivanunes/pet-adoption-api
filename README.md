@@ -24,7 +24,7 @@ decisões de arquitetura tomadas de propósito e não herdadas.
 | Persistência | Spring Data JPA + Hibernate 7 |
 | Banco | PostgreSQL 18 |
 | Migrations | Flyway |
-| Segurança | Spring Security 6 |
+| Segurança | Spring Security 7 (OAuth2 Resource Server, JWT HS256) |
 | Testes | JUnit 5 + Testcontainers |
 | Build | Maven (via wrapper) |
 | Infra | Docker + Docker Compose |
@@ -58,8 +58,27 @@ curl http://localhost:8080/actuator/health
 docker compose up -d db
 ```
 
+A aplicação **não sobe sem `JWT_SECRET`** (mínimo de 32 caracteres) — é falha
+proposital, para que nenhum ambiente rode com segredo de exemplo:
+
 ```bash
-./mvnw spring-boot:run
+JWT_SECRET=um-segredo-local-com-pelo-menos-32-caracteres ./mvnw spring-boot:run
+```
+
+### Endpoints de autenticação
+
+| Método | Rota | Acesso |
+|---|---|---|
+| `POST` | `/api/auth/register` | público |
+| `POST` | `/api/auth/login` | público |
+| `GET` | `/api/users/me` | requer `Authorization: Bearer <token>` |
+
+```bash
+curl -X POST http://localhost:8080/api/auth/register -H 'Content-Type: application/json' -d '{"name":"Ana","email":"ana@example.com","password":"senha-super-secreta"}'
+```
+
+```bash
+curl -X POST http://localhost:8080/api/auth/login -H 'Content-Type: application/json' -d '{"email":"ana@example.com","password":"senha-super-secreta"}'
 ```
 
 ### Testes
@@ -135,6 +154,24 @@ Idade derivada nunca fica desatualizada. Como animal resgatado raramente tem
 data exata, a estimativa é registrada como estimativa (`birth_date_estimated`)
 em vez de fingir precisão que não existe.
 
+**Validação de JWT pelo resource server, não por filtro próprio.**
+Assinatura, expiração e claims são verificadas pelo Spring Security. Um filtro
+escrito à mão no caminho crítico de autenticação é onde erros silenciosos se
+escondem — e um `catch` mal colocado nele transforma token inválido em acesso
+liberado. O código próprio se limita a *emitir* o token.
+
+**Configuração de segurança tipada e validada.**
+O segredo do JWT é um `@ConfigurationProperties` validado, sem valor padrão. Ler
+a propriedade com `@Value("${chave:padrão}")` faz uma chave escrita errada cair
+no padrão em silêncio — a aplicação sobe assinando tokens com um segredo que
+ninguém escolheu. Aqui, chave errada ou ausente derruba o boot com mensagem.
+
+**Sem handler genérico de `Exception`.**
+Um `@ExceptionHandler(Exception.class)` roda antes dos resolvedores padrão do
+Spring e engole o 401 de credencial inválida, o 403 de acesso negado e o 400 de
+JSON malformado, devolvendo 500 para todos. Erros de framework ficam com o
+framework; o handler trata só exceções do domínio, em formato RFC 7807.
+
 **`open-in-view` desligado.**
 Com ele ligado, a sessão do Hibernate fica aberta durante a serialização da
 resposta e esconde lazy loading — as queries N+1 aparecem só em produção.
@@ -148,7 +185,7 @@ Em construção. O que já está de pé:
 - [x] Fundação: build, Docker, Compose, CI, configuração
 - [x] Schema núcleo (usuários, papéis, organizações, vínculos, pets)
 - [x] Teste de integração validando as migrations em banco limpo
-- [ ] Autenticação e autorização (JWT)
+- [x] Autenticação JWT: cadastro, login e rota autenticada
 - [ ] CRUD de pets, usuários e organizações
 - [ ] Perfil e preferências do adotante
 - [ ] Fluxo de adoção (candidatura → decisão → adoção efetivada)
