@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: pet-adoption-api
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/pet_adoption}
+    username: ${DB_USERNAME:petuser}
+    password: ${DB_PASSWORD:petpass}
+
+  jpa:
+    hibernate:
+      # O schema pertence ao Flyway. "validate" faz o Hibernate conferir, no
+      # boot, se as entidades batem com o banco -- drift falha rápido, em vez
+      # de virar erro obscuro em runtime.
+      ddl-auto: validate
+    # Desligado de propósito: com open-in-view a sessão fica aberta durante a
+    # serialização da resposta, escondendo lazy loading em queries N+1.
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+
+logging:
+  level:
+    org.flywaydb: info

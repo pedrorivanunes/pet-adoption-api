@@ -1,0 +1,41 @@
+name: pet-adoption
+
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:-pet_adoption}
+      POSTGRES_USER: ${DB_USER:-petuser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-petpass}
+    ports:
+      - "5432:5432"
+    volumes:
+      # Postgres 18+ espera o volume na raiz de /var/lib/postgresql, e não em
+      # /var/lib/postgresql/data como nas versões anteriores: a imagem passou a
+      # guardar os dados numa subpasta por versão maior, o que é o que permite
+      # "pg_upgrade" no futuro. Montar no caminho antigo faz o container abortar.
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      # A API espera este healthcheck de verdade, não um "sleep" arbitrário:
+      # o Postgres aceita conexões só depois que o initdb termina.
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-petuser} -d ${DB_NAME:-pet_adoption}"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+
+  api:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/${DB_NAME:-pet_adoption}
+      DB_USERNAME: ${DB_USER:-petuser}
+      DB_PASSWORD: ${DB_PASSWORD:-petpass}
+    ports:
+      - "8080:8080"
+    restart: on-failure
+
+volumes:
+  pgdata:

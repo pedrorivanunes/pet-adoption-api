@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: build & test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+          cache: maven
+
+      # Os runners do GitHub têm Docker daemon, então os testes de integração
+      # com Testcontainers rodam aqui do mesmo jeito que rodam localmente --
+      # contra um Postgres real, não contra banco em memória.
+      - name: Build and test
+        run: ./mvnw -B -ntp verify
