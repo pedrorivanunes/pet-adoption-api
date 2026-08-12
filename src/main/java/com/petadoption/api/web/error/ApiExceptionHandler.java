@@ -1,7 +1,7 @@
 package com.petadoption.api.web.error;
 
-import com.petadoption.api.service.EmailAlreadyUsedException;
-import com.petadoption.api.service.UserNotFoundException;
+import com.petadoption.api.service.ConflictException;
+import com.petadoption.api.service.NotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.access.AccessDeniedException;
@@ -23,15 +23,15 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class ApiExceptionHandler {
 
-	@ExceptionHandler(EmailAlreadyUsedException.class)
-	ProblemDetail handleEmailAlreadyUsed(EmailAlreadyUsedException exception) {
+	@ExceptionHandler(ConflictException.class)
+	ProblemDetail handleConflict(ConflictException exception) {
 		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
-		problem.setTitle("E-mail já cadastrado");
+		problem.setTitle("Conflito com o estado atual");
 		return problem;
 	}
 
-	@ExceptionHandler(UserNotFoundException.class)
-	ProblemDetail handleUserNotFound(UserNotFoundException exception) {
+	@ExceptionHandler(NotFoundException.class)
+	ProblemDetail handleNotFound(NotFoundException exception) {
 		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
 		problem.setTitle("Recurso não encontrado");
 		return problem;

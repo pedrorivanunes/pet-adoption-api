@@ -123,6 +123,16 @@
 			<artifactId>testcontainers-postgresql</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!--
+			Declarado explicitamente (versão vem do BOM do Spring Boot) para que
+			o caminho do jar possa ser referenciado no argLine do surefire logo
+			abaixo.
+		-->
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -130,6 +140,35 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<!--
+					Publica o caminho de cada dependência como propriedade
+					(${groupId:artifactId:jar}), que é o que permite apontar o
+					agente do Mockito no surefire logo abaixo sem fixar caminho.
+				-->
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>properties</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<!--
+						Mockito precisa de um agente Java para instrumentar classes.
+						Sem isto ele se auto-anexa em tempo de execução e avisa que
+						JDKs futuros vão proibir isso; declarar o agente aqui é a
+						forma suportada e deixa o build limpo.
+					-->
+					<argLine>-javaagent:${org.mockito:mockito-core:jar}</argLine>
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

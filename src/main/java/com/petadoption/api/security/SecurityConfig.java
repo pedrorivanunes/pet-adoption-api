@@ -40,6 +40,14 @@ public class SecurityConfig {
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
 						.requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**").permitAll()
+
+						// Catálogo público de adoção. Os padrões usam UM
+						// asterisco, não dois: "/api/pets/**" pegaria também
+						// sub-rotas futuras como "/api/pets/{id}/histórico", e
+						// liberaria sem querer o que nascer ali embaixo.
+						.requestMatchers(HttpMethod.GET, "/api/pets", "/api/pets/*").permitAll()
+						.requestMatchers(HttpMethod.GET, "/api/organizations", "/api/organizations/*").permitAll()
+						.requestMatchers(HttpMethod.GET, "/api/organizations/*/pets").permitAll()
 						// Regra final restritiva: rota nova nasce protegida. O
 						// inverso — liberar por padrão e lembrar de proteger —
 						// falha exatamente no dia em que alguém esquece.

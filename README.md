@@ -65,13 +65,37 @@ proposital, para que nenhum ambiente rode com segredo de exemplo:
 JWT_SECRET=um-segredo-local-com-pelo-menos-32-caracteres ./mvnw spring-boot:run
 ```
 
-### Endpoints de autenticação
+### Endpoints
+
+Autenticação:
 
 | Método | Rota | Acesso |
 |---|---|---|
 | `POST` | `/api/auth/register` | público |
 | `POST` | `/api/auth/login` | público |
-| `GET` | `/api/users/me` | requer `Authorization: Bearer <token>` |
+| `GET` | `/api/users/me` | autenticado |
+| `GET` | `/api/users/me/pets` | autenticado |
+
+Pets — o catálogo é público, o resto exige permissão sobre o animal:
+
+| Método | Rota | Acesso |
+|---|---|---|
+| `GET` | `/api/pets?status=&species=&page=&size=` | público |
+| `GET` | `/api/pets/{id}` | público |
+| `POST` | `/api/pets` | autenticado (dono: você ou uma organização sua) |
+| `PUT` | `/api/pets/{id}` | dono, ou membro da organização dona |
+| `DELETE` | `/api/pets/{id}` | dono, ou membro da organização dona |
+
+Organizações — leitura pública, escrita conforme o vínculo:
+
+| Método | Rota | Acesso |
+|---|---|---|
+| `GET` | `/api/organizations` · `/api/organizations/{id}` | público |
+| `GET` | `/api/organizations/{id}/pets` | público |
+| `POST` | `/api/organizations` | autenticado (criador vira ADMIN) |
+| `PUT` · `DELETE` | `/api/organizations/{id}` | ADMIN da organização |
+| `GET` | `/api/organizations/{id}/members` | membro da organização |
+| `POST` · `PUT` · `DELETE` | `/api/organizations/{id}/members[/{userId}]` | ADMIN da organização |
 
 ```bash
 curl -X POST http://localhost:8080/api/auth/register -H 'Content-Type: application/json' -d '{"name":"Ana","email":"ana@example.com","password":"senha-super-secreta"}'
@@ -166,6 +190,17 @@ a propriedade com `@Value("${chave:padrão}")` faz uma chave escrita errada cair
 no padrão em silêncio — a aplicação sobe assinando tokens com um segredo que
 ninguém escolheu. Aqui, chave errada ou ausente derruba o boot com mensagem.
 
+**Rota pública casada com um asterisco, não com dois.**
+`/api/pets/**` liberaria qualquer sub-rota criada depois — inclusive uma que
+devesse ser privada. Os padrões usam `/api/pets/*`, que casa só o nível do
+recurso. E "meus pets" mora em `/api/users/me/pets`, fora da árvore pública, em
+vez de `/api/pets/me`, onde dependeria da ordem das regras para não vazar.
+
+**Organização nunca fica sem administrador.**
+O último ADMIN não consegue se rebaixar nem se remover. Sem essa trava, a
+organização continua existindo sem ninguém que possa administrá-la, e não há
+caminho de volta pela própria API.
+
 **Sem handler genérico de `Exception`.**
 Um `@ExceptionHandler(Exception.class)` roda antes dos resolvedores padrão do
 Spring e engole o 401 de credencial inválida, o 403 de acesso negado e o 400 de
@@ -186,7 +221,7 @@ Em construção. O que já está de pé:
 - [x] Schema núcleo (usuários, papéis, organizações, vínculos, pets)
 - [x] Teste de integração validando as migrations em banco limpo
 - [x] Autenticação JWT: cadastro, login e rota autenticada
-- [ ] CRUD de pets, usuários e organizações
+- [x] Pets e organizações: CRUD com autorização por vínculo
 - [ ] Perfil e preferências do adotante
 - [ ] Fluxo de adoção (candidatura → decisão → adoção efetivada)
 - [ ] Histórico de rastreabilidade
