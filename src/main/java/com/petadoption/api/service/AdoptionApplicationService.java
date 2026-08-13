@@ -6,6 +6,7 @@ import com.petadoption.api.domain.AdoptionApplication;
 import com.petadoption.api.domain.ApplicationStatus;
 import com.petadoption.api.domain.Pet;
 import com.petadoption.api.domain.PetStatus;
+import com.petadoption.api.domain.StayKind;
 import com.petadoption.api.domain.User;
 import com.petadoption.api.domain.compatibility.CompatibilityCalculator;
 import com.petadoption.api.domain.compatibility.CompatibilityResult;
@@ -31,10 +32,11 @@ public class AdoptionApplicationService {
 	private final AdopterProfileService profiles;
 	private final PetAccess petAccess;
 	private final CompatibilityCalculator calculator;
+	private final PetHistoryService history;
 
 	public AdoptionApplicationService(AdoptionApplicationRepository applications, AdoptionRepository adoptions,
 			PetRepository pets, UserService users, AdopterProfileService profiles, PetAccess petAccess,
-			CompatibilityCalculator calculator) {
+			CompatibilityCalculator calculator, PetHistoryService history) {
 		this.applications = applications;
 		this.adoptions = adoptions;
 		this.pets = pets;
@@ -42,6 +44,7 @@ public class AdoptionApplicationService {
 		this.profiles = profiles;
 		this.petAccess = petAccess;
 		this.calculator = calculator;
+		this.history = history;
 	}
 
 	/**
@@ -143,15 +146,30 @@ public class AdoptionApplicationService {
 		application.decide(ApplicationStatus.APPROVED, actor, note);
 
 		Pet pet = application.getPet();
-		pet.setStatus(PetStatus.ADOPTED);
-		pets.save(pet);
+		User adopter = application.getAdopter();
+		LocalDate today = LocalDate.now();
 
 		Adoption adoption = new Adoption();
 		adoption.setApplication(application);
 		adoption.setPet(pet);
-		adoption.setAdopter(application.getAdopter());
-		adoption.setAdoptedOn(LocalDate.now());
+		adoption.setAdopter(adopter);
+		adoption.setAdoptedOn(today);
+		// A origem é capturada antes da transferência: depois dela o pet já
+		// aponta para o adotante, e quem entregou o animal — justamente quem
+		// tem o dever de acompanhar — teria se perdido.
+		adoption.setOriginUser(pet.getOwnerUser());
+		adoption.setOriginOrg(pet.getOwnerOrg());
 		adoptions.save(adoption);
+
+		// Adotar é virar tutor. Sem esta transferência, o abrigo continuaria
+		// figurando como dono de um animal que já não está com ele.
+		pet.setStatus(PetStatus.ADOPTED);
+		pet.setOwnerUser(adopter);
+		pet.setOwnerOrg(null);
+		pets.save(pet);
+
+		history.openStay(pet, StayKind.ADOPTION, "Lar de " + adopter.getName(), today,
+				"Adoção aprovada", adopter, null);
 
 		rejectRemainingCandidates(application, actor);
 

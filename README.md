@@ -98,6 +98,21 @@ Organizações — leitura pública, escrita conforme o vínculo:
 | `GET` | `/api/organizations/{id}/members` | membro da organização |
 | `POST` · `PUT` · `DELETE` | `/api/organizations/{id}/members[/{userId}]` | ADMIN da organização |
 
+Histórico e saúde do animal:
+
+| Método | Rota | Acesso |
+|---|---|---|
+| `GET` | `/api/pets/{id}/history` | **público** |
+| `POST` | `/api/pets/{id}/history` | quem administra o pet |
+| `GET` · `POST` | `/api/pets/{id}/health-records` | quem administra o pet |
+
+Acompanhamento pós-adoção:
+
+| Método | Rota | Acesso |
+|---|---|---|
+| `POST` | `/api/pets/{id}/followups` | quem **entregou** o animal |
+| `GET` | `/api/pets/{id}/followup-report` | quem entregou **ou** quem adotou |
+
 Adoção — candidatar-se é do adotante, decidir é de quem cuida do pet:
 
 | Método | Rota | Acesso |
@@ -276,6 +291,31 @@ demais candidatos são recusados com justificativa. Quebrado em chamadas
 separadas, existiria uma janela com o pet já adotado e gente ainda esperando
 resposta — ou duas aprovações para o mesmo animal.
 
+**A trajetória do animal é modelada como intervalos, não como eventos.**
+A pergunta do domínio é "onde esteve e por quanto tempo" — duração se extrai de
+um intervalo, não de um instante. A data de início é informada e não derivada de
+`created_at`, porque o resgate quase sempre antecede o cadastro no sistema.
+Registrar uma permanência nova encerra a anterior na mesma operação: a linha do
+tempo não tem buraco nem sobreposição porque o encerramento é consequência da
+abertura, não uma segunda chamada que alguém pode esquecer.
+
+**Adotar é virar tutor.**
+Aprovar transfere a tutoria do pet ao adotante e abre a permanência no lar
+adotivo. Por isso a adoção guarda quem *entregou* o animal: sem esse registro se
+perderia justamente quem tem o dever de acompanhar os seis meses seguintes — e
+registrar acompanhamento não pode depender de administrar o pet, senão seria
+dar ao adotante a caneta para atestar o próprio acompanhamento.
+
+**O histórico público não identifica tutores pessoas físicas.**
+Saber que o animal passou por um abrigo conhecido dá confiança à adoção;
+organização é entidade pública e aparece pelo nome. Já a pessoa que o abrigou em
+lar temporário aparece apenas como "houve um tutor". A ficha de saúde, essa, não
+é pública em nenhuma hipótese: detalhe clínico não é vitrine.
+
+**O relatório mostra os meses sem contato, não só a contagem.**
+Vinte visitas no primeiro mês e silêncio nos cinco seguintes somam vinte, e não
+são acompanhamento. Meses que ainda não chegaram não contam como falha.
+
 **Organização nunca fica sem administrador.**
 O último ADMIN não consegue se rebaixar nem se remover. Sem essa trava, a
 organização continua existindo sem ninguém que possa administrá-la, e não há
@@ -304,7 +344,8 @@ Em construção. O que já está de pé:
 - [x] Pets e organizações: CRUD com autorização por vínculo
 - [x] Perfil e preferências do adotante
 - [x] Fluxo de adoção (candidatura → decisão → adoção efetivada)
-- [ ] Histórico de rastreabilidade
 - [x] Cálculo de compatibilidade, busca ranqueada e relatório
-- [ ] Acompanhamento pós-adoção
+- [x] Histórico de rastreabilidade e ficha de saúde
+- [x] Acompanhamento pós-adoção com relatório dos 6 meses
+- [ ] Base de exemplo populada
 - [ ] Documentação OpenAPI e coleção Postman

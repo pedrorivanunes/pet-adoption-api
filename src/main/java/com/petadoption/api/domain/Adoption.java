@@ -43,8 +43,26 @@ public class Adoption {
 	@JoinColumn(name = "adopter_user_id", nullable = false)
 	private User adopter;
 
+	// Quem entregou o animal. A tutoria passa para o adotante na aprovação, e
+	// sem este registro se perderia quem tem o dever de acompanhar os seis
+	// meses seguintes. Exatamente um dos dois é preenchido.
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "origin_user_id")
+	private User originUser;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "origin_org_id")
+	private Organization originOrg;
+
 	@Column(name = "adopted_on", nullable = false)
 	private LocalDate adoptedOn;
+
+	/** Fim do período mínimo de acompanhamento previsto no domínio. */
+	public LocalDate followUpDeadline() {
+		return adoptedOn.plusMonths(FOLLOW_UP_MONTHS);
+	}
+
+	public static final int FOLLOW_UP_MONTHS = 6;
 
 	@CreationTimestamp
 	@Column(name = "created_at", nullable = false, updatable = false)

@@ -48,6 +48,11 @@ public class SecurityConfig {
 						.requestMatchers(HttpMethod.GET, "/api/pets", "/api/pets/*").permitAll()
 						.requestMatchers(HttpMethod.GET, "/api/organizations", "/api/organizations/*").permitAll()
 						.requestMatchers(HttpMethod.GET, "/api/organizations/*/pets").permitAll()
+						// A trajetória do animal é parte do catálogo: saber que
+						// foi resgatado e por onde passou é o que dá confiança
+						// à adoção. Já a ficha de saúde, em /health-records,
+						// continua fora — detalhe clínico não é vitrine.
+						.requestMatchers(HttpMethod.GET, "/api/pets/*/history").permitAll()
 						// Regra final restritiva: rota nova nasce protegida. O
 						// inverso — liberar por padrão e lembrar de proteger —
 						// falha exatamente no dia em que alguém esquece.
