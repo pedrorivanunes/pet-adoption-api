@@ -12,6 +12,9 @@ public record ApplicationResponse(
 		String message,
 		PetSummary pet,
 		AdopterSummary adopter,
+		/** Compatibilidade no instante da candidatura, não recalculada depois. */
+		Integer compatibilityScore,
+		boolean hasBlockingFactor,
 		OffsetDateTime createdAt,
 		OffsetDateTime decidedAt,
 		String decisionNote) {
@@ -36,6 +39,8 @@ public record ApplicationResponse(
 						application.getAdopter().getId(),
 						application.getAdopter().getName(),
 						application.getAdopter().getEmail()),
+				application.getCompatibilityScore(),
+				application.isHasBlockingFactor(),
 				application.getCreatedAt(),
 				application.getDecidedAt(),
 				application.getDecisionNote());

@@ -1,11 +1,14 @@
 package com.petadoption.api.service;
 
+import com.petadoption.api.domain.AdopterProfile;
 import com.petadoption.api.domain.Adoption;
 import com.petadoption.api.domain.AdoptionApplication;
 import com.petadoption.api.domain.ApplicationStatus;
 import com.petadoption.api.domain.Pet;
 import com.petadoption.api.domain.PetStatus;
 import com.petadoption.api.domain.User;
+import com.petadoption.api.domain.compatibility.CompatibilityCalculator;
+import com.petadoption.api.domain.compatibility.CompatibilityResult;
 import com.petadoption.api.repository.AdoptionApplicationRepository;
 import com.petadoption.api.repository.AdoptionRepository;
 import com.petadoption.api.repository.PetRepository;
@@ -27,15 +30,18 @@ public class AdoptionApplicationService {
 	private final UserService users;
 	private final AdopterProfileService profiles;
 	private final PetAccess petAccess;
+	private final CompatibilityCalculator calculator;
 
 	public AdoptionApplicationService(AdoptionApplicationRepository applications, AdoptionRepository adoptions,
-			PetRepository pets, UserService users, AdopterProfileService profiles, PetAccess petAccess) {
+			PetRepository pets, UserService users, AdopterProfileService profiles, PetAccess petAccess,
+			CompatibilityCalculator calculator) {
 		this.applications = applications;
 		this.adoptions = adoptions;
 		this.pets = pets;
 		this.users = users;
 		this.profiles = profiles;
 		this.petAccess = petAccess;
+		this.calculator = calculator;
 	}
 
 	/**
@@ -52,7 +58,7 @@ public class AdoptionApplicationService {
 
 		// 1. Sem perfil não há como avaliar compatibilidade nem conversar sobre
 		//    a adoção — e é o perfil que alimenta o ranqueamento.
-		profiles.findOf(actor).orElseThrow(() -> new ConflictException(
+		AdopterProfile profile = profiles.findOf(actor).orElseThrow(() -> new ConflictException(
 				"Preencha seu perfil de adotante antes de se candidatar."));
 
 		// 2. Quem cuida do pet não se candidata a ele: aprovaria a si mesmo.
@@ -76,6 +82,15 @@ public class AdoptionApplicationService {
 		application.setPet(pet);
 		application.setAdopter(actor);
 		application.setMessage(message);
+
+		// Compatibilidade gravada como retrato do momento. Candidatura com
+		// fator impeditivo não é recusada automaticamente: fica registrada e
+		// sinalizada, porque pode haver contexto que o cadastro não captura, e
+		// a decisão é de quem cuida do animal.
+		CompatibilityResult compatibility = calculator.evaluate(pet, profile);
+		application.setCompatibilityScore(compatibility.score());
+		application.setHasBlockingFactor(compatibility.blocked());
+
 		return applications.save(application);
 	}
 
@@ -91,7 +106,7 @@ public class AdoptionApplicationService {
 		Pet pet = pets.findById(petId).orElseThrow(() -> NotFoundException.of("Pet", petId));
 		petAccess.requireCanManage(pet, users.getByEmail(actorEmail));
 
-		return applications.findByPet_IdOrderByCreatedAtDesc(petId, pageable);
+		return applications.findByPet_Id(petId, pageable);
 	}
 
 	/** Visível ao candidato e a quem administra o pet — a ninguém mais. */

@@ -1,12 +1,15 @@
 package com.petadoption.api.web;
 
 import com.petadoption.api.service.AdoptionApplicationService;
+import com.petadoption.api.service.CompatibilityService;
 import com.petadoption.api.web.dto.ApplicationResponse;
 import com.petadoption.api.web.dto.CreateApplicationRequest;
 import com.petadoption.api.web.dto.DecisionRequest;
+import com.petadoption.api.web.dto.MatchResponse;
 import com.petadoption.api.web.dto.PageResponse;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,9 +27,24 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdoptionApplicationController {
 
 	private final AdoptionApplicationService applications;
+	private final CompatibilityService compatibility;
 
-	public AdoptionApplicationController(AdoptionApplicationService applications) {
+	public AdoptionApplicationController(AdoptionApplicationService applications,
+			CompatibilityService compatibility) {
 		this.applications = applications;
+		this.compatibility = compatibility;
+	}
+
+	/**
+	 * "Quero adotar": pets disponíveis ranqueados por compatibilidade com quem
+	 * está autenticado. Animais com fator impeditivo não aparecem.
+	 */
+	@GetMapping("/adoptions/matches")
+	public PageResponse<MatchResponse> matches(@AuthenticationPrincipal Jwt jwt,
+			@PageableDefault(size = 20) Pageable pageable) {
+
+		return PageResponse.from(
+				compatibility.matchesFor(jwt.getSubject(), pageable), MatchResponse::from);
 	}
 
 	@PostMapping("/adoptions/applications")
@@ -50,11 +68,20 @@ public class AdoptionApplicationController {
 		return ApplicationResponse.from(applications.getById(id, jwt.getSubject()));
 	}
 
-	/** Candidaturas recebidas por um pet — só para quem o administra. */
+	/**
+	 * Relatório de compatibilidade de um pet: as candidaturas recebidas,
+	 * ranqueadas por afinidade, visíveis só a quem administra o animal.
+	 *
+	 * <p>O ranking cobre quem se candidatou, e não toda a base de adotantes.
+	 * Perfil de adotante tem moradia, filhos e quantas pessoas moram na casa —
+	 * informação que um abrigo só tem motivo de ver quando a pessoa procurou por
+	 * aquele animal.
+	 */
 	@GetMapping("/pets/{petId}/applications")
 	public PageResponse<ApplicationResponse> forPet(@PathVariable Long petId,
 			@AuthenticationPrincipal Jwt jwt,
-			@PageableDefault(size = 20) Pageable pageable) {
+			@PageableDefault(size = 20, sort = "compatibilityScore",
+					direction = Sort.Direction.DESC) Pageable pageable) {
 
 		return PageResponse.from(
 				applications.listForPet(petId, jwt.getSubject(), pageable), ApplicationResponse::from);

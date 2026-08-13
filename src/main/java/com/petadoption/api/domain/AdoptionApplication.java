@@ -43,6 +43,17 @@ public class AdoptionApplication {
 	/** Texto do candidato: por que quer adotar, como é a casa, etc. */
 	private String message;
 
+	/**
+	 * Compatibilidade calculada no instante da candidatura. É um retrato, não
+	 * um valor vivo: mudanças posteriores no perfil ou no pet não reescrevem o
+	 * que embasou a decisão.
+	 */
+	@Column(name = "compatibility_score")
+	private Integer compatibilityScore;
+
+	@Column(name = "has_blocking_factor", nullable = false)
+	private boolean hasBlockingFactor;
+
 	@CreationTimestamp
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private OffsetDateTime createdAt;

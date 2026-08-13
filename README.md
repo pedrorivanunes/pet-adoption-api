@@ -108,6 +108,10 @@ Adoção — candidatar-se é do adotante, decidir é de quem cuida do pet:
 | `GET` | `/api/pets/{id}/applications` | quem administra o pet |
 | `POST` | `/api/adoptions/applications/{id}/approve` · `/reject` | quem administra o pet |
 | `POST` | `/api/adoptions/applications/{id}/cancel` | o próprio candidato |
+| `GET` | `/api/adoptions/matches` | autenticado, com perfil de adotante |
+
+`GET /api/pets/{id}/applications` é também o **relatório de compatibilidade** do
+animal: as candidaturas vêm ranqueadas por afinidade.
 
 ```bash
 curl -X POST http://localhost:8080/api/auth/register -H 'Content-Type: application/json' -d '{"name":"Ana","email":"ana@example.com","password":"senha-super-secreta"}'
@@ -144,6 +148,56 @@ apareceria em cada alteração trivial. Camadas simples, com dependências
 apontando numa direção só, entregam a mesma testabilidade sem o overhead.
 
 ---
+
+## Compatibilidade
+
+O cálculo vive em `CompatibilityCalculator` — uma função pura, sem banco e sem
+HTTP, testada por tabela de casos.
+
+| Categoria | Situação | Pontos |
+|---|---|---|
+| Espécie | igual / diferente da desejada | **+20 / −20** |
+| Raça | igual / diferente | **+10 / −10** |
+| Porte | igual / diferente | **+10 / −10** |
+| Sexo | igual / diferente | **+5 / −5** |
+| Saúde | animal exige cuidados especiais **e** adotante aceita | +10 |
+| Saúde | animal exige cuidados especiais **e** adotante não aceita | −10 |
+| Saúde | animal saudável **e** adotante aberto a cuidados especiais | +5 |
+| Saúde | animal saudável **e** adotante procura exatamente isso | +10 |
+| Saúde | doença crônica aceita / recusada | +10 / −10 |
+| Saúde | sem doença crônica, como o adotante procura | +5 |
+| Social | animal sociável **e** adotante já tem animais | +5 |
+| Social | animal exige cuidados constantes **e** adotante tem tempo | +5 |
+| 🚫 | animal **não convive** com outros **e** adotante já tem animais | **impeditivo** |
+| 🚫 | animal exige cuidados constantes **e** adotante **não tem** tempo | **impeditivo** |
+
+**Impeditivo não é pontuação baixa, é eliminação.** Os dois casos acima dizem
+respeito ao bem-estar do animal, e nenhuma soma de pontos os compensa — por isso
+saem num campo separado do score, e não como um número muito negativo. Um par
+pode ter score alto e ainda assim estar eliminado.
+
+**Preferência não declarada não pontua nem penaliza.** Quem não disse que queria
+um cão não deve ser penalizado por receber um gato: a pessoa apenas não opinou.
+O mesmo vale para dado ausente no animal — raça indefinida, comum em resgatados,
+não conta contra ele. E `goodWithOtherAnimals` nulo significa "não se sabe", que
+é diferente de "não convive": só a negativa confirmada elimina.
+
+**O score é explicável.** O resultado carrega a decomposição — cada fator com
+categoria, pontos e motivo legível. Um ranking que diz "50" e nada mais é
+impossível de conferir e impossível de justificar a quem está adotando.
+
+**Retrato na candidatura, cálculo ao vivo na busca.** A candidatura grava o score
+do momento em que foi feita: se a pessoa editar as preferências amanhã, o que
+embasou a decisão não muda retroativamente. Já o "quero adotar" recalcula sempre,
+porque ali o objetivo é refletir o catálogo de agora.
+
+**O relatório cobre quem se candidatou, não a base inteira de adotantes.** Perfil
+de adotante tem moradia, filhos e quantas pessoas moram na casa — informação que
+um abrigo só tem motivo de ver quando aquela pessoa procurou por aquele animal.
+
+**Candidatura com impeditivo é sinalizada, não recusada.** Fica registrada com a
+marca, para quem cuida do animal decidir com a informação à vista: pode haver
+contexto que o cadastro não captura.
 
 ## Decisões de projeto
 
@@ -251,6 +305,6 @@ Em construção. O que já está de pé:
 - [x] Perfil e preferências do adotante
 - [x] Fluxo de adoção (candidatura → decisão → adoção efetivada)
 - [ ] Histórico de rastreabilidade
-- [ ] Cálculo de compatibilidade e busca ranqueada
+- [x] Cálculo de compatibilidade, busca ranqueada e relatório
 - [ ] Acompanhamento pós-adoção
 - [ ] Documentação OpenAPI e coleção Postman
