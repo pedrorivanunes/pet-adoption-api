@@ -136,6 +136,38 @@ curl -X POST http://localhost:8080/api/auth/register -H 'Content-Type: applicati
 curl -X POST http://localhost:8080/api/auth/login -H 'Content-Type: application/json' -d '{"email":"ana@example.com","password":"senha-super-secreta"}'
 ```
 
+### Base de exemplo
+
+O Compose sobe com o perfil `demo` ativo, que popula a base com um cenário
+completo — um abrigo com ADMIN e STAFF, cinco animais com condições variadas,
+uma tutora particular, duas adotantes com perfil preenchido, uma candidatura
+pendente e uma adoção de quatro meses atrás com acompanhamento em andamento.
+
+Todas as contas usam a senha `senha-de-demonstracao`:
+
+| Conta | Papel no cenário |
+|---|---|
+| `ana@exemplo.br` | ADMIN do Abrigo Quatro Patas |
+| `bruno@exemplo.br` | STAFF do abrigo |
+| `carla@exemplo.br` | adotante com candidatura pendente |
+| `diego@exemplo.br` | adotante que já concluiu uma adoção |
+| `elisa@exemplo.br` | tutora particular |
+
+O seed é criado **pelos serviços da aplicação**, não por `INSERT`s: dado semeado
+assim não consegue existir em estado que a API recusaria. E um teste de
+integração sobe o perfil `demo` e confere o cenário — base de exemplo que
+ninguém verifica apodrece em silêncio.
+
+Para uma base vazia: `SPRING_PROFILES_ACTIVE=default docker compose up`.
+
+### Coleção Postman
+
+[`postman/pet-adoption-api.postman_collection.json`](postman/pet-adoption-api.postman_collection.json)
+— 33 requisições cobrindo toda a API. Importe e comece por **Autenticação →
+Login**: o token é salvo automaticamente numa variável da coleção e usado pelas
+demais requisições. Troque a variável `email` para operar como outra pessoa e
+ver as regras de permissão respondendo.
+
 ### Testes
 
 Precisam de um Docker daemon rodando: a suíte de integração sobe um PostgreSQL
@@ -347,5 +379,24 @@ Em construção. O que já está de pé:
 - [x] Cálculo de compatibilidade, busca ranqueada e relatório
 - [x] Histórico de rastreabilidade e ficha de saúde
 - [x] Acompanhamento pós-adoção com relatório dos 6 meses
-- [ ] Base de exemplo populada
-- [ ] Documentação OpenAPI e coleção Postman
+- [x] Base de exemplo populada e verificada por teste
+- [x] Coleção Postman versionada
+
+### Em aberto
+
+**Documentação OpenAPI.** O springdoc, que geraria a especificação a partir dos
+controllers, está na versão 2.8.6 — linha do Spring Boot 3. Não existe release
+para o Boot 4, e ele depende do Jackson 2, enquanto este projeto roda Jackson 3.
+Forçar a dependência quebraria o build. As alternativas são escrever a
+especificação à mão e prendê-la ao código com um teste que compare as rotas
+declaradas com as que o Spring realmente mapeia, ou esperar o springdoc alcançar
+o Boot 4. Enquanto isso, a coleção Postman e as tabelas de endpoints acima são a
+documentação da API.
+
+**Período sem responsável no histórico.** O schema permite uma permanência sem
+guarda — o tempo de rua antes do resgate. A API sempre atribui um responsável,
+então esse caso hoje só é alcançável por escrita direta no banco.
+
+**Transferência de guarda entre organizações.** Um abrigo passar um animal a
+outro é registrável como permanência, mas não move a tutoria: isso pediria um
+fluxo de proposta e aceite, já que envolve duas partes.

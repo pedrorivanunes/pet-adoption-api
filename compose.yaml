@@ -30,6 +30,9 @@ services:
       db:
         condition: service_healthy
     environment:
+      # Sobe com a base de exemplo populada, para o projeto ser explorável
+      # imediatamente. Use SPRING_PROFILES_ACTIVE=default para uma base vazia.
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-demo}
       DB_URL: jdbc:postgresql://db:5432/${DB_NAME:-pet_adoption}
       DB_USERNAME: ${DB_USER:-petuser}
       DB_PASSWORD: ${DB_PASSWORD:-petpass}
