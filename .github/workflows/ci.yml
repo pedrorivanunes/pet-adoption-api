@@ -2,27 +2,119 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+  workflow_dispatch:
+
+# a new push to the same branch makes the previous run pointless
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
-  build:
-    name: build & test
+  test:
+    name: build and test
     runs-on: ubuntu-latest
-
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
+          java-version: "21"
           distribution: temurin
           cache: maven
 
-      # Os runners do GitHub têm Docker daemon, então os testes de integração
-      # com Testcontainers rodam aqui do mesmo jeito que rodam localmente --
-      # contra um Postgres real, não contra banco em memória.
-      - name: Build and test
+      # GitHub runners have a Docker daemon, so the Testcontainers integration
+      # tests run here exactly as they run locally -- against a real Postgres,
+      # not an in-memory stand-in. `verify` is what runs them: every test class
+      # is named *Test, so surefire picks all of them up in one pass.
+      #
+      # The same command also produces the JaCoCo report and enforces the
+      # coverage floor configured in pom.xml.
+      - name: Build, test and check coverage
         run: ./mvnw -B -ntp verify
+
+      # Uploaded even on failure: when the coverage gate is what broke the
+      # build, the report is the thing you need to see.
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: target/site/jacoco/
+          if-no-files-found: ignore
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          if-no-files-found: ignore
+
+  docker:
+    name: image and compose stack
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      # Building on every run is what stops the Dockerfile from quietly rotting
+      # while nobody looks. The image build skips tests on purpose (no Docker
+      # daemon inside a build), which is why the job above exists.
+      - name: Build the image
+        run: docker compose build
+
+      # A green build proves the image compiles, not that the stack comes up.
+      # These steps prove the rest: Postgres becomes healthy, Flyway applies
+      # every migration to an empty database, and the API answers.
+      - name: Start the stack
+        run: docker compose up -d
+
+      - name: Wait for the API to report healthy
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:8080/actuator/health | grep -q '"status":"UP"'; then
+              echo "API is up after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "API did not become healthy in 60s"
+          exit 1
+
+      # The compose file starts with the `demo` profile, so the seed has run.
+      # Hitting a real endpoint checks the whole path -- migrations, seed,
+      # security config, serialisation -- rather than just the health probe,
+      # which would still be green with an empty and broken catalogue.
+      #
+      # Four, not five: the seed creates five animals and adopts one of them,
+      # and the catalogue defaults to what is still available.
+      - name: Check the seeded catalogue answers
+        run: |
+          body=$(curl -fsS 'http://localhost:8080/api/pets?size=50')
+          echo "$body"
+          echo "$body" | grep -q '"totalElements":4' \
+            || { echo "expected the demo seed to publish 4 available pets"; exit 1; }
+
+      # A protected route must still refuse an anonymous caller. Cheap, and it
+      # would catch a security config that got wired open.
+      - name: Check a protected route still refuses anonymous callers
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/api/users/me)
+          [ "$code" = "401" ] || { echo "expected 401 from /api/users/me, got $code"; exit 1; }
+
+      # Without this the failure logs are the only thing missing exactly when
+      # you need them.
+      - name: Show the stack logs
+        if: failure()
+        run: docker compose logs
+
+      - name: Tear the stack down
+        if: always()
+        run: docker compose down -v
