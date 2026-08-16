@@ -43,7 +43,7 @@ public class PetController {
 				pets.create(request.toData(), request.ownerOrganizationId(), jwt.getSubject()));
 	}
 
-	/** Catálogo público: por padrão, quem está disponível para adoção. */
+	/** The public catalogue: by default, whatever is available for adoption. */
 	@GetMapping
 	public PageResponse<PetResponse> list(
 			@RequestParam(required = false) PetStatus status,

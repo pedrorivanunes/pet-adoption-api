@@ -25,8 +25,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Regras de pet em isolamento. O que exige a cadeia HTTP inteira — códigos de
- * status, token, filtros — está em PetIntegrationTest.
+ * Pet rules in isolation. What needs the whole HTTP chain -- status codes,
+ * tokens, filters -- lives in PetIntegrationTest.
  */
 class PetServiceTest {
 
@@ -47,9 +47,9 @@ class PetServiceTest {
 		users = mock(UserService.class);
 		organizationAccess = mock(OrganizationAccess.class);
 
-		// PetAccess é lógica pura, sem colaborador externo além do acesso a
-		// organizações: usar a implementação real aqui testa a regra de dono de
-		// verdade, em vez de um dublê que sempre concorda.
+		// PetAccess is pure logic, with no external collaborator beyond
+		// organization access: using the real implementation here tests the
+		// ownership rule for real, instead of a double that always agrees.
 		PetAccess petAccess = new PetAccess(organizationAccess);
 		service = new PetService(pets, organizations, adoptions, users, organizationAccess, petAccess);
 
@@ -62,7 +62,7 @@ class PetServiceTest {
 	}
 
 	@Test
-	@DisplayName("sem organização informada, o dono é quem está autenticado")
+	@DisplayName("with no organization given, the owner is the authenticated person")
 	void createsPetOwnedByActor() {
 		Pet pet = service.create(data("Luna", null), null, "ator@example.com");
 
@@ -72,7 +72,7 @@ class PetServiceTest {
 	}
 
 	@Test
-	@DisplayName("espécie é normalizada para forma canônica")
+	@DisplayName("species is normalised to its canonical form")
 	void normalizesSpecies() {
 		Pet pet = service.create(data("Mia", null), null, "ator@example.com");
 
@@ -80,10 +80,10 @@ class PetServiceTest {
 	}
 
 	@Test
-	@DisplayName("cadastrar para organização exige vínculo, verificado antes de salvar")
+	@DisplayName("registering for an organization requires membership, checked before saving")
 	void createsPetForOrganizationOnlyWithMembership() {
 		Organization organization = new Organization();
-		organization.setName("Abrigo");
+		organization.setName("Shelter");
 		when(organizations.findById(7L)).thenReturn(Optional.of(organization));
 
 		Pet pet = service.create(data("Thor", null), 7L, "ator@example.com");
@@ -94,7 +94,7 @@ class PetServiceTest {
 	}
 
 	@Test
-	@DisplayName("organização inexistente devolve não encontrado antes de checar vínculo")
+	@DisplayName("a missing organization returns not-found before the membership check")
 	void createFailsForUnknownOrganization() {
 		when(organizations.findById(99L)).thenReturn(Optional.empty());
 
@@ -105,7 +105,7 @@ class PetServiceTest {
 	}
 
 	@Test
-	@DisplayName("pet de outra pessoa não pode ser editado")
+	@DisplayName("someone else's pet cannot be edited")
 	void rejectsUpdateFromNonOwner() {
 		User someoneElse = new User();
 		someoneElse.setId(42L);
@@ -121,7 +121,7 @@ class PetServiceTest {
 	}
 
 	@Test
-	@DisplayName("estado terminal não admite transição de volta")
+	@DisplayName("a terminal state admits no transition back")
 	void rejectsTransitionOutOfTerminalStatus() {
 		Pet pet = new Pet();
 		pet.setOwnerUser(actor);

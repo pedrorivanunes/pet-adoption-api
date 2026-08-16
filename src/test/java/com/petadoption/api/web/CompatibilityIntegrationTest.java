@@ -14,18 +14,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** "Quero adotar" e o relatório de compatibilidade, ponta a ponta. */
+/** "I want to adopt" and the compatibility report, end to end. */
 class CompatibilityIntegrationTest extends AbstractIntegrationTest {
 
 	@Test
-	@DisplayName("buscar compatíveis exige token")
+	@DisplayName("searching for matches requires a token")
 	void matchesRequireAuthentication() throws Exception {
 		mockMvc.perform(get("/api/adoptions/matches"))
 				.andExpect(status().isUnauthorized());
 	}
 
 	@Test
-	@DisplayName("sem perfil de adotante não há o que comparar")
+	@DisplayName("with no adopter profile there is nothing to compare")
 	void matchesRequireProfile() throws Exception {
 		String token = tokenFor("sem-perfil-match@example.com");
 
@@ -34,38 +34,38 @@ class CompatibilityIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("o pet que casa com as preferências vem na frente, com a conta aberta")
+	@DisplayName("the pet matching the preferences comes first, with the maths shown")
 	void ranksByCompatibility() throws Exception {
-		String tutor = tokenFor("tutor-match@example.com");
-		createPet(tutor, Map.of("name", "Combina", "species", "dog",
+		String guardian = tokenFor("guardian-match@example.com");
+		createPet(guardian, Map.of("name", "Match", "species", "dog",
 				"size", "MEDIUM", "sex", "FEMALE"));
-		createPet(tutor, Map.of("name", "Nao Combina", "species", "cat",
+		createPet(guardian, Map.of("name", "No Match", "species", "cat",
 				"size", "LARGE", "sex", "MALE"));
 
-		String adopter = tokenFor("adotante-match@example.com");
+		String adopter = tokenFor("adopter-match@example.com");
 		saveProfile(adopter, Map.of("housingType", "HOUSE", "preferredSpecies", "dog",
 				"preferredSize", "MEDIUM", "preferredSex", "FEMALE"));
 
 		mockMvc.perform(get("/api/adoptions/matches").header("Authorization", bearer(adopter)))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.totalElements").value(2))
-				.andExpect(jsonPath("$.content[0].pet.name").value("Combina"))
-				// 20 espécie + 10 porte + 5 sexo + 10 saudável + 5 sem crônica
+				.andExpect(jsonPath("$.content[0].pet.name").value("Match"))
+				// 20 species + 10 size + 5 sex + 10 healthy + 5 no chronic illness
 				.andExpect(jsonPath("$.content[0].score").value(50))
-				.andExpect(jsonPath("$.content[1].pet.name").value("Nao Combina"))
-				// e o ranking se explica: cada fator vem com motivo
+				.andExpect(jsonPath("$.content[1].pet.name").value("No Match"))
+				// and the ranking explains itself: every factor carries a reason
 				.andExpect(jsonPath("$.content[0].factors[0].category").value("SPECIES"))
 				.andExpect(jsonPath("$.content[0].factors[0].points").value(20))
 				.andExpect(jsonPath("$.content[0].factors[0].detail").isNotEmpty());
 	}
 
 	@Test
-	@DisplayName("animal com fator impeditivo não aparece na busca")
+	@DisplayName("an animal with a blocker does not appear in the search")
 	void blockedPetsAreExcluded() throws Exception {
-		String tutor = tokenFor("tutor-impeditivo@example.com");
-		createPet(tutor, Map.of("name", "Sociavel", "species", "dog",
+		String guardian = tokenFor("guardian-impeditivo@example.com");
+		createPet(guardian, Map.of("name", "Sociavel", "species", "dog",
 				"goodWithOtherAnimals", true));
-		createPet(tutor, Map.of("name", "Nao Convive", "species", "dog",
+		createPet(guardian, Map.of("name", "Not Sociable", "species", "dog",
 				"goodWithOtherAnimals", false));
 
 		String adopter = tokenFor("ja-tem-animais@example.com");
@@ -78,24 +78,24 @@ class CompatibilityIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("os próprios pets não são oferecidos a quem cuida deles")
+	@DisplayName("your own pets are not offered to you")
 	void ownPetsAreNotOffered() throws Exception {
-		String tutor = tokenFor("tutor-proprio@example.com");
-		createPet(tutor, Map.of("name", "Meu Cao", "species", "dog"));
-		saveProfile(tutor, Map.of("housingType", "HOUSE"));
+		String guardian = tokenFor("guardian-proprio@example.com");
+		createPet(guardian, Map.of("name", "Meu Cao", "species", "dog"));
+		saveProfile(guardian, Map.of("housingType", "HOUSE"));
 
-		mockMvc.perform(get("/api/adoptions/matches").header("Authorization", bearer(tutor)))
+		mockMvc.perform(get("/api/adoptions/matches").header("Authorization", bearer(guardian)))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.totalElements").value(0));
 	}
 
 	@Test
-	@DisplayName("a candidatura guarda o score do momento em que foi feita")
+	@DisplayName("the application stores the score from the moment it was made")
 	void applicationRecordsScoreSnapshot() throws Exception {
-		String tutor = tokenFor("tutor-snapshot@example.com");
-		long petId = createPet(tutor, Map.of("name", "Alvo", "species", "dog", "size", "MEDIUM"));
+		String guardian = tokenFor("guardian-snapshot@example.com");
+		long petId = createPet(guardian, Map.of("name", "Alvo", "species", "dog", "size", "MEDIUM"));
 
-		String adopter = tokenFor("adotante-snapshot@example.com");
+		String adopter = tokenFor("adopter-snapshot@example.com");
 		saveProfile(adopter, Map.of("housingType", "HOUSE", "preferredSpecies", "dog",
 				"preferredSize", "MEDIUM"));
 
@@ -104,16 +104,16 @@ class CompatibilityIntegrationTest extends AbstractIntegrationTest {
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(body(Map.of("petId", petId))))
 				.andExpect(status().isCreated())
-				// 20 espécie + 10 porte + 10 saudável + 5 sem crônica
+				// 20 species + 10 size + 10 healthy + 5 no chronic illness
 				.andExpect(jsonPath("$.compatibilityScore").value(45))
 				.andExpect(jsonPath("$.hasBlockingFactor").value(false));
 	}
 
 	@Test
-	@DisplayName("candidatura com impeditivo é registrada e sinalizada, não recusada")
+	@DisplayName("an application with a blocker is recorded and flagged, not refused")
 	void blockingFactorIsFlaggedNotRefused() throws Exception {
-		String tutor = tokenFor("tutor-flag@example.com");
-		long petId = createPet(tutor, Map.of("name", "Exigente", "species", "dog",
+		String guardian = tokenFor("guardian-flag@example.com");
+		long petId = createPet(guardian, Map.of("name", "Exigente", "species", "dog",
 				"requiresConstantCare", true));
 
 		String adopter = tokenFor("sem-tempo@example.com");
@@ -128,10 +128,10 @@ class CompatibilityIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("relatório do pet ranqueia as candidaturas por compatibilidade")
+	@DisplayName("the pet report ranks applications by compatibility")
 	void petReportRanksApplicants() throws Exception {
-		String tutor = tokenFor("tutor-relatorio@example.com");
-		long petId = createPet(tutor, Map.of("name", "Disputado", "species", "dog", "size", "SMALL"));
+		String guardian = tokenFor("guardian-report@example.com");
+		long petId = createPet(guardian, Map.of("name", "Disputado", "species", "dog", "size", "SMALL"));
 
 		String pouco = tokenFor("pouco-compativel@example.com");
 		saveProfile(pouco, Map.of("housingType", "HOUSE", "preferredSpecies", "cat",
@@ -144,14 +144,14 @@ class CompatibilityIntegrationTest extends AbstractIntegrationTest {
 		applyTo(muito, petId);
 
 		mockMvc.perform(get("/api/pets/" + petId + "/applications")
-						.header("Authorization", bearer(tutor)))
+						.header("Authorization", bearer(guardian)))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.totalElements").value(2))
 				.andExpect(jsonPath("$.content[0].adopter.email").value("muito-compativel@example.com"))
 				.andExpect(jsonPath("$.content[1].adopter.email").value("pouco-compativel@example.com"));
 	}
 
-	// ----------------------------------------------------------------- apoio --
+	// --------------------------------------------------------------- helpers --
 
 	private long createPet(String token, Map<String, Object> attributes) throws Exception {
 		Map<String, Object> payload = new LinkedHashMap<>(attributes);

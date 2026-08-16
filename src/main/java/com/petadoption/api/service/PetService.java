@@ -47,9 +47,9 @@ public class PetService {
 			Boolean birthDateEstimated,
 			PetStatus status,
 
-			// Wrappers, não primitivos: no pedido HTTP estes campos podem
-			// simplesmente não vir, e "não informado" é um estado real na
-			// borda. A tradução para o default do domínio acontece em apply().
+			// Boxed types, not primitives: in an HTTP request these fields may
+			// simply be absent, and "not stated" is a real state at the edge.
+			// The translation to the domain default happens in apply().
 			Boolean hasSpecialNeeds,
 			Boolean hasContinuousTreatment,
 			Boolean hasChronicDisease,
@@ -60,12 +60,13 @@ public class PetService {
 	}
 
 	/**
-	 * Cadastra um pet.
+	 * Registers a pet.
 	 *
-	 * <p>Com {@code ownerOrganizationId}, o pet fica sob a organização — e quem
-	 * cadastra precisa ter vínculo com ela. Sem esse campo, o dono é a própria
-	 * pessoa autenticada. Não há caminho para cadastrar pet em nome de outra
-	 * pessoa: o dono ou é você, ou é uma organização da qual você participa.
+	 * <p>With {@code ownerOrganizationId}, the pet belongs to the organization
+	 * -- and whoever registers it must be a member. Without that field, the
+	 * owner is the authenticated person themselves. There is no path to register
+	 * a pet on someone else's behalf: the owner is either you, or an
+	 * organization you belong to.
 	 */
 	@Transactional
 	public Pet create(PetData data, Long ownerOrganizationId, String actorEmail) {
@@ -76,7 +77,7 @@ public class PetService {
 
 		if (ownerOrganizationId != null) {
 			Organization organization = organizations.findById(ownerOrganizationId)
-					.orElseThrow(() -> NotFoundException.of("Organização", ownerOrganizationId));
+					.orElseThrow(() -> NotFoundException.of("Organization", ownerOrganizationId));
 			organizationAccess.requireMember(ownerOrganizationId, actor);
 			pet.setOwnerOrg(organization);
 		}
@@ -92,7 +93,7 @@ public class PetService {
 		return pets.findById(id).orElseThrow(() -> NotFoundException.of("Pet", id));
 	}
 
-	/** Catálogo público. Sem filtro de status, mostra quem está para adoção. */
+	/** The public catalogue. With no status filter, it shows what is up for adoption. */
 	@Transactional(readOnly = true)
 	public Page<Pet> list(PetStatus status, String species, Pageable pageable) {
 		PetStatus effective = status != null ? status : PetStatus.AVAILABLE;
@@ -120,7 +121,7 @@ public class PetService {
 		PetStatus requested = data.status() != null ? data.status() : pet.getStatus();
 		if (pet.getStatus().isTerminal() && requested != pet.getStatus()) {
 			throw new ConflictException(
-					"Pet marcado como " + pet.getStatus() + " não volta a outro estado.");
+					"A pet marked as " + pet.getStatus() + " does not return to another state.");
 		}
 
 		apply(pet, data);
@@ -132,18 +133,19 @@ public class PetService {
 		Pet pet = getById(id);
 		petAccess.requireCanManage(pet, users.getByEmail(actorEmail));
 
-		// A adoção é histórico e aponta para o pet com RESTRICT: o banco já
-		// recusaria o delete. Detectar aqui troca um erro de constraint cru por
-		// uma explicação de por que a operação não faz sentido.
+		// The adoption is history and points at the pet with RESTRICT: the
+		// database would refuse the delete anyway. Catching it here swaps a raw
+		// constraint error for an explanation of why the operation makes no
+		// sense.
 		if (adoptions.existsByPet_Id(id)) {
 			throw new ConflictException(
-					"Este pet tem adoção registrada e não pode ser removido — o histórico depende dele.");
+					"This pet has an adoption on record and cannot be removed -- the history depends on it.");
 		}
 
 		pets.delete(pet);
 	}
 
-	// ======================================================== apoio ==========
+	// ======================================================= helpers =========
 
 	private void apply(Pet pet, PetData data) {
 		pet.setName(data.name().trim());
@@ -152,12 +154,12 @@ public class PetService {
 		pet.setSex(data.sex());
 		pet.setSize(data.size());
 		pet.setBirthDate(data.birthDate());
-		// Data de nascimento não informada como exata é tratada como estimativa:
-		// para animal resgatado, esse é o caso comum.
+		// A birth date not stated as exact is treated as an estimate: for a
+		// rescued animal, that is the common case.
 		pet.setBirthDateEstimated(data.birthDateEstimated() == null || data.birthDateEstimated());
 
-		// Flag ausente significa "não". Assumir o contrário marcaria animais com
-		// necessidades que eles não têm.
+		// An absent flag means "no". Assuming the opposite would mark animals
+		// with needs they do not have.
 		pet.setHasSpecialNeeds(isTrue(data.hasSpecialNeeds()));
 		pet.setHasContinuousTreatment(isTrue(data.hasContinuousTreatment()));
 		pet.setHasChronicDisease(isTrue(data.hasChronicDisease()));
@@ -171,9 +173,9 @@ public class PetService {
 	}
 
 	/**
-	 * Espécie é texto livre — o mundo tem mais que cães e gatos — mas precisa de
-	 * forma canônica, senão "gato", "Gato" e "GATO" viram três espécies
-	 * distintas e o filtro do catálogo passa a mentir.
+	 * Species is free text -- the world holds more than cats and dogs -- but it
+	 * needs a canonical form, otherwise "cat", "Cat" and "CAT" become three
+	 * distinct species and the catalogue filter starts lying.
 	 */
 	private String normalizeSpecies(String species) {
 		return species == null ? null : species.trim().toUpperCase(Locale.ROOT);

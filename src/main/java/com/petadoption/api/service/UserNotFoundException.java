@@ -1,9 +1,9 @@
 package com.petadoption.api.service;
 
-/** Lançada quando o usuário procurado não existe. */
+/** Thrown when the requested user does not exist. */
 public class UserNotFoundException extends NotFoundException {
 
 	public UserNotFoundException(String email) {
-		super("Usuário não encontrado: " + email);
+		super("User not found: " + email);
 	}
 }

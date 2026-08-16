@@ -12,45 +12,46 @@ import java.time.LocalDate;
 
 public record CreatePetRequest(
 
-		@NotBlank(message = "nome é obrigatório")
-		@Size(max = 100, message = "nome deve ter no máximo 100 caracteres")
+		@NotBlank(message = "name is required")
+		@Size(max = 100, message = "name must be at most 100 characters")
 		String name,
 
-		@NotBlank(message = "espécie é obrigatória (ex.: DOG, CAT)")
-		@Size(max = 30, message = "espécie deve ter no máximo 30 caracteres")
+		@NotBlank(message = "species is required (e.g. DOG, CAT)")
+		@Size(max = 30, message = "species must be at most 30 characters")
 		String species,
 
-		@Size(max = 100, message = "raça deve ter no máximo 100 caracteres")
+		@Size(max = 100, message = "breed must be at most 100 characters")
 		String breed,
 
 		PetSex sex,
 
 		PetSize size,
 
-		@PastOrPresent(message = "data de nascimento não pode estar no futuro")
+		@PastOrPresent(message = "birth date cannot be in the future")
 		LocalDate birthDate,
 
 		Boolean birthDateEstimated,
 
 		PetStatus status,
 
-		// Wrappers de propósito: omitir o campo é diferente de mandá-lo false, e
-		// o Jackson 3 recusa mapear ausência em primitivo. Quem decide o padrão
-		// é o serviço, não o formato do JSON.
+		// Boxed on purpose: omitting the field is different from sending it as
+		// false, and Jackson 3 refuses to map absence onto a primitive. The
+		// service decides the default, not the shape of the JSON.
 		Boolean hasSpecialNeeds,
 		Boolean hasContinuousTreatment,
 		Boolean hasChronicDisease,
 		Boolean requiresConstantCare,
 
-		/** Nulo significa "não se sabe" — diferente de "não convive". */
+		/** Null means "unknown" -- different from "does not get along". */
 		Boolean goodWithOtherAnimals,
 
-		@Size(max = 1000, message = "observações de saúde devem ter no máximo 1000 caracteres")
+		@Size(max = 1000, message = "health notes must be at most 1000 characters")
 		String healthNotes,
 
 		/**
-		 * Quando informado, o pet fica sob a organização e quem cadastra precisa
-		 * ter vínculo com ela. Quando ausente, o dono é quem está autenticado.
+		 * When present, the pet belongs to the organization and whoever
+		 * registers it must be a member. When absent, the owner is the
+		 * authenticated person.
 		 */
 		Long ownerOrganizationId) {
 

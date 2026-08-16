@@ -17,11 +17,12 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Acompanhamento pós-adoção, ancorado no pet.
+ * Post-adoption follow-up, anchored on the pet.
  *
- * <p>O recurso conceitual é a adoção, mas a alça que abrigo e adotante têm em
- * mãos é o animal. Expor ids de adoção exigiria endpoints só para descobri-los,
- * e a adoção vigente de um pet é sempre determinável — a mais recente.
+ * <p>The conceptual resource is the adoption, but the handle a shelter and an
+ * adopter actually hold is the animal. Exposing adoption ids would require
+ * endpoints just to discover them, and a pet's current adoption is always
+ * determinable -- it is the most recent one.
  */
 @RestController
 @RequestMapping("/api/pets/{petId}")
@@ -33,7 +34,7 @@ public class FollowUpController {
 		this.followUps = followUps;
 	}
 
-	/** Registrar contato é de quem entregou o animal, não de quem o recebeu. */
+	/** Logging a contact belongs to whoever handed the animal over, not whoever received it. */
 	@PostMapping("/followups")
 	@ResponseStatus(HttpStatus.CREATED)
 	public FollowUpResponse record(@PathVariable Long petId,
@@ -43,7 +44,7 @@ public class FollowUpController {
 		return FollowUpResponse.from(followUps.record(petId, request.toData(), jwt.getSubject()));
 	}
 
-	/** Relatório do período mínimo de acompanhamento. */
+	/** Report for the minimum follow-up period. */
 	@GetMapping("/followup-report")
 	public FollowUpReportResponse report(@PathVariable Long petId, @AuthenticationPrincipal Jwt jwt) {
 		return FollowUpReportResponse.from(followUps.report(petId, jwt.getSubject()));

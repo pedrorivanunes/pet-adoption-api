@@ -10,15 +10,15 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
- * Traduz exceções de negócio em respostas RFC 7807 (ProblemDetail).
+ * Translates business exceptions into RFC 7807 responses (ProblemDetail).
  *
- * <p><strong>Não existe aqui um handler para {@code Exception}.</strong> Um
- * catch-all parece defensivo, mas o resolvedor de {@code @ControllerAdvice}
- * roda antes dos resolvedores padrão do Spring: ele engoliria o 401 de
- * credencial inválida, o 403 de acesso negado, o 400 de JSON malformado e o 405
- * de método não suportado, devolvendo 500 para todos. Erros de framework ficam
- * com o Spring, que já sabe o status correto de cada um
- * ({@code spring.mvc.problemdetails.enabled} os formata como ProblemDetail).
+ * <p><strong>There is deliberately no handler for {@code Exception} here.</strong>
+ * A catch-all looks defensive, but the {@code @ControllerAdvice} resolver runs
+ * ahead of Spring's default resolvers: it would swallow the 401 for bad
+ * credentials, the 403 for denied access, the 400 for malformed JSON and the 405
+ * for an unsupported method, returning 500 for all of them. Framework errors stay
+ * with Spring, which already knows the right status for each
+ * ({@code spring.mvc.problemdetails.enabled} formats them as ProblemDetail).
  */
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -33,27 +33,27 @@ public class ApiExceptionHandler {
 	@ExceptionHandler(NotFoundException.class)
 	ProblemDetail handleNotFound(NotFoundException exception) {
 		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
-		problem.setTitle("Recurso não encontrado");
+		problem.setTitle("Resource not found");
 		return problem;
 	}
 
 	/**
-	 * Credencial inválida no login. A mensagem é deliberadamente genérica: dizer
-	 * "e-mail não existe" versus "senha errada" entrega ao atacante quais contas
-	 * existem.
+	 * Bad credentials at login. The message is deliberately generic: saying
+	 * "email does not exist" versus "wrong password" tells an attacker which
+	 * accounts exist.
 	 */
 	@ExceptionHandler(AuthenticationException.class)
 	ProblemDetail handleAuthentication(AuthenticationException exception) {
 		ProblemDetail problem = ProblemDetail.forStatusAndDetail(
-				HttpStatus.UNAUTHORIZED, "Credenciais inválidas");
-		problem.setTitle("Não autenticado");
+				HttpStatus.UNAUTHORIZED, "Invalid credentials");
+		problem.setTitle("Not authenticated");
 		return problem;
 	}
 
 	@ExceptionHandler(AccessDeniedException.class)
 	ProblemDetail handleAccessDenied(AccessDeniedException exception) {
 		ProblemDetail problem = ProblemDetail.forStatusAndDetail(
-				HttpStatus.FORBIDDEN, "Você não tem permissão para esta operação");
+				HttpStatus.FORBIDDEN, "You do not have permission for this operation");
 		problem.setTitle("Acesso negado");
 		return problem;
 	}

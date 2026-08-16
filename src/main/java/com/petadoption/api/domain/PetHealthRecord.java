@@ -18,7 +18,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
-/** Vacinação, castração, doença ou tratamento — história de saúde do animal. */
+/** Vaccination, neutering, illness or treatment -- the animal's health history. */
 @Entity
 @Table(name = "pet_health_records")
 @Getter

@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.stream.Collectors;
 
-/** Emite os tokens de acesso. A validação fica com o resource server. */
+/** Issues the access tokens. Validation is the resource server's job. */
 @Service
 public class TokenService {
 
@@ -32,8 +32,8 @@ public class TokenService {
 		Instant now = Instant.now();
 		Instant expiresAt = now.plus(properties.ttl());
 
-		// Espaço como separador segue a convenção do claim "scope" do OAuth2,
-		// que é o formato que o JwtGrantedAuthoritiesConverter já sabe ler.
+		// A space separator follows the OAuth2 "scope" claim convention, which
+		// is the format JwtGrantedAuthoritiesConverter already knows how to read.
 		String authorities = user.getAuthorities().stream()
 				.map(GrantedAuthority::getAuthority)
 				.collect(Collectors.joining(" "));
@@ -46,9 +46,9 @@ public class TokenService {
 				.claim(AUTHORITIES_CLAIM, authorities)
 				.build();
 
-		// O algoritmo precisa ir explícito no header: sem ele o encoder assume
-		// um algoritmo assimétrico e não encontra chave para assinar. Tem que
-		// casar com o MacAlgorithm configurado no decoder.
+		// The algorithm has to be explicit in the header: without it the encoder
+		// assumes an asymmetric algorithm and finds no key to sign with. It has
+		// to match the MacAlgorithm configured on the decoder.
 		JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
 
 		String value = encoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();

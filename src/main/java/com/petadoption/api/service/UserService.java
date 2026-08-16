@@ -24,11 +24,11 @@ public class UserService {
 	}
 
 	/**
-	 * Dados de cadastro.
+	 * Registration data.
 	 *
-	 * <p>Um record próprio do serviço, e não o DTO da camada web: assim a regra
-	 * de negócio não passa a depender do formato do JSON de entrada, e a seta
-	 * entre as camadas continua apontando numa direção só.
+	 * <p>A record owned by the service rather than the web layer's DTO: this
+	 * keeps the business rule from depending on the shape of the incoming JSON,
+	 * and keeps the arrow between the layers pointing in one direction only.
 	 */
 	public record NewUser(String name, String email, String rawPassword, String phone) {
 	}
@@ -59,13 +59,13 @@ public class UserService {
 
 	private Role defaultRole() {
 		return roles.findByName(Role.USER).orElseThrow(() -> new IllegalStateException(
-				"Papel " + Role.USER + " não encontrado: a carga inicial de papéis não foi aplicada."));
+				"Role " + Role.USER + " not found: the initial role seed was not applied."));
 	}
 
 	/**
-	 * E-mail é identificador de login, então precisa de forma canônica única.
-	 * O banco também garante isso por índice sobre lower(email) — aqui é onde a
-	 * regra é aplicada, lá é onde ela é imposta.
+	 * Email is the login identifier, so it needs a single canonical form. The
+	 * database also guarantees this with an index over lower(email) -- here is
+	 * where the rule is applied, there is where it is enforced.
 	 */
 	private String normalizeEmail(String email) {
 		return email == null ? "" : email.trim().toLowerCase(Locale.ROOT);

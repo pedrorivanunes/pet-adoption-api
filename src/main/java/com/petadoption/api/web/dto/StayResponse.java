@@ -6,13 +6,14 @@ import com.petadoption.api.domain.StayKind;
 import java.time.LocalDate;
 
 /**
- * Um trecho do histórico público do animal.
+ * One stretch of the animal's public history.
  *
- * <p>Quando a guarda era de uma pessoa física, o nome não é exposto — apenas o
- * fato de haver um tutor. O histórico existe para contar a trajetória do
- * animal, e essa história se conta sem identificar quem passou por ela.
- * Organização é diferente: é entidade pública, e saber que o animal esteve num
- * abrigo conhecido é parte do que dá confiança à adoção.
+ * <p>When custody belonged to a private individual, the name is not exposed --
+ * only the fact that there was a guardian. The history exists to tell the
+ * animal's journey, and that story can be told without identifying the people in
+ * it. An organization is different: it is a public entity, and knowing the
+ * animal spent time at a known shelter is part of what makes an adopter
+ * confident.
  */
 public record StayResponse(
 		Long id,
@@ -49,7 +50,7 @@ public record StayResponse(
 		if (stay.getCustodianUser() != null) {
 			return new Custodian("USER", null, null);
 		}
-		// Período sem responsável — a rua, antes do resgate.
+		// A period with nobody responsible -- the street, before the rescue.
 		return null;
 	}
 }

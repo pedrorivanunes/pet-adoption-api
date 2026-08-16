@@ -17,12 +17,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Exercita o fluxo completo de autenticação contra a cadeia de filtros real.
+ * Exercises the whole authentication flow against the real filter chain.
  *
- * <p>Vários destes casos são regressões de defeitos concretos de uma versão
- * anterior deste sistema: senha errada respondendo 500 em vez de 401,
- * autoridades ganhando um prefixo {@code ROLE_} duplicado, e rota protegida
- * acessível sem token.
+ * <p>Several of these cases guard against specific failure modes that are easy
+ * to reintroduce: a wrong password answering 500 instead of 401, authorities
+ * picking up a duplicated {@code ROLE_} prefix, and a protected route reachable
+ * without a token.
  */
 @IntegrationTest
 @Transactional
@@ -35,7 +35,7 @@ class AuthIntegrationTest {
 	private ObjectMapper json;
 
 	@Test
-	@DisplayName("cadastro devolve 201 sem expor a senha e com autoridade sem prefixo")
+	@DisplayName("registration returns 201 without exposing the password and with an unprefixed authority")
 	void registerReturnsCreatedWithoutLeakingPassword() throws Exception {
 		mockMvc.perform(post("/api/auth/register")
 						.contentType(MediaType.APPLICATION_JSON)
@@ -49,7 +49,7 @@ class AuthIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("e-mail é normalizado, então o mesmo endereço em outra caixa colide com 409")
+	@DisplayName("email is normalised, so the same address in another case collides with 409")
 	void registerIsCaseInsensitiveOnEmail() throws Exception {
 		mockMvc.perform(post("/api/auth/register")
 						.contentType(MediaType.APPLICATION_JSON)
@@ -64,7 +64,7 @@ class AuthIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("cadastro sem senha válida devolve 400, não 500")
+	@DisplayName("registration without a valid password returns 400, not 500")
 	void registerRejectsInvalidPayload() throws Exception {
 		String payload = json.writeValueAsString(Map.of(
 				"name", "Curta", "email", "curta@example.com", "password", "123"));
@@ -82,7 +82,7 @@ class AuthIntegrationTest {
 
 		mockMvc.perform(post("/api/auth/login")
 						.contentType(MediaType.APPLICATION_JSON)
-						.content(loginPayload("dani@example.com", "senha-super-secreta")))
+						.content(loginPayload("dani@example.com", "a-very-secret-password")))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.accessToken").isNotEmpty())
 				.andExpect(jsonPath("$.tokenType").value("Bearer"))
@@ -90,15 +90,15 @@ class AuthIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("senha errada devolve 401 — e não 500, como fazia o handler catch-all antigo")
+	@DisplayName("a wrong password returns 401, not the 500 a catch-all handler would produce")
 	void loginWithWrongPasswordReturnsUnauthorized() throws Exception {
-		register("erro@example.com");
+		register("wrong@example.com");
 
 		mockMvc.perform(post("/api/auth/login")
 						.contentType(MediaType.APPLICATION_JSON)
-						.content(loginPayload("erro@example.com", "senha-errada-mesmo")))
+						.content(loginPayload("wrong@example.com", "definitely-the-wrong-password")))
 				.andExpect(status().isUnauthorized())
-				.andExpect(jsonPath("$.detail").value("Credenciais inválidas"));
+				.andExpect(jsonPath("$.detail").value("Invalid credentials"));
 	}
 
 	@Test
@@ -106,9 +106,9 @@ class AuthIntegrationTest {
 	void loginWithUnknownEmailIsIndistinguishable() throws Exception {
 		mockMvc.perform(post("/api/auth/login")
 						.contentType(MediaType.APPLICATION_JSON)
-						.content(loginPayload("nao-existe@example.com", "qualquer-senha-aqui")))
+						.content(loginPayload("does-not-exist@example.com", "any-password-here")))
 				.andExpect(status().isUnauthorized())
-				.andExpect(jsonPath("$.detail").value("Credenciais inválidas"));
+				.andExpect(jsonPath("$.detail").value("Invalid credentials"));
 	}
 
 	@Test
@@ -119,7 +119,7 @@ class AuthIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("rota protegida com token devolve o usuário do subject do token")
+	@DisplayName("a protected route with a token returns the user from the token subject")
 	void meReturnsAuthenticatedUser() throws Exception {
 		register("fabio@example.com");
 		String token = login("fabio@example.com");
@@ -131,13 +131,13 @@ class AuthIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("token forjado com outra assinatura é rejeitado com 401")
+	@DisplayName("a token forged with another signature is rejected with 401")
 	void meRejectsTamperedToken() throws Exception {
-		mockMvc.perform(get("/api/users/me").header("Authorization", "Bearer nao.e.um.token"))
+		mockMvc.perform(get("/api/users/me").header("Authorization", "Bearer not.a.token"))
 				.andExpect(status().isUnauthorized());
 	}
 
-	// ----------------------------------------------------------------- apoio --
+	// --------------------------------------------------------------- helpers --
 
 	private void register(String email) throws Exception {
 		mockMvc.perform(post("/api/auth/register")
@@ -149,7 +149,7 @@ class AuthIntegrationTest {
 	private String login(String email) throws Exception {
 		String body = mockMvc.perform(post("/api/auth/login")
 						.contentType(MediaType.APPLICATION_JSON)
-						.content(loginPayload(email, "senha-super-secreta")))
+						.content(loginPayload(email, "a-very-secret-password")))
 				.andExpect(status().isOk())
 				.andReturn().getResponse().getContentAsString();
 
@@ -158,9 +158,9 @@ class AuthIntegrationTest {
 
 	private String registerPayload(String email) throws Exception {
 		return json.writeValueAsString(Map.of(
-				"name", "Pessoa de Teste",
+				"name", "Test Person",
 				"email", email,
-				"password", "senha-super-secreta",
+				"password", "a-very-secret-password",
 				"phone", "51999990000"));
 	}
 

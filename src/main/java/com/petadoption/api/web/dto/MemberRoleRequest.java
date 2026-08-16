@@ -5,6 +5,6 @@ import jakarta.validation.constraints.NotNull;
 
 public record MemberRoleRequest(
 
-		@NotNull(message = "papel é obrigatório (ADMIN ou STAFF)")
+		@NotNull(message = "role is required (ADMIN or STAFF)")
 		OrgMemberRole role) {
 }

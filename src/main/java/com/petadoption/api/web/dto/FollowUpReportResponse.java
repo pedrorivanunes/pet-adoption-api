@@ -7,11 +7,11 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Relatório de acompanhamento pós-adoção.
+ * The post-adoption follow-up report.
  *
- * <p>Além dos registros, traz o que a contagem sozinha esconde: em quais meses
- * já decorridos não houve contato nenhum. Vinte visitas no primeiro mês e
- * silêncio nos cinco seguintes somam vinte, e não são acompanhamento.
+ * <p>Besides the records, it carries what a count alone hides: which of the
+ * elapsed months had no contact at all. Twenty visits in the first month and
+ * silence for the next five add up to twenty, and are not a follow-up.
  */
 public record FollowUpReportResponse(
 		Long adoptionId,

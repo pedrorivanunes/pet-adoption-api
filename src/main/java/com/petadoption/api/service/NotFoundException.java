@@ -1,6 +1,6 @@
 package com.petadoption.api.service;
 
-/** Recurso solicitado não existe. Vira 404 na borda web. */
+/** The requested resource does not exist. Becomes a 404 at the web edge. */
 public class NotFoundException extends RuntimeException {
 
 	public NotFoundException(String message) {
@@ -8,6 +8,6 @@ public class NotFoundException extends RuntimeException {
 	}
 
 	public static NotFoundException of(String resource, Object id) {
-		return new NotFoundException(resource + " não encontrado(a): " + id);
+		return new NotFoundException(resource + " not found: " + id);
 	}
 }

@@ -14,11 +14,11 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.OffsetDateTime;
 
 /**
- * Abrigo, ONG ou protetor coletivo que cadastra pets para adoção.
+ * A shelter, NGO or rescue group that lists pets for adoption.
  *
- * <p>Não existe aqui nenhuma referência a "usuário administrador". Quem pode
- * agir em nome da organização é definido exclusivamente por
- * {@link OrganizationMembership} — uma fonte só para esse fato.
+ * <p>There is deliberately no "admin user" reference here. Who may act on behalf
+ * of the organization is defined exclusively by {@link OrganizationMembership}
+ * -- a single source for that fact.
  */
 @Entity
 @Table(name = "organizations")

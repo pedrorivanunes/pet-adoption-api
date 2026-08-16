@@ -71,7 +71,7 @@ public class OrganizationController {
 		organizations.delete(id, jwt.getSubject());
 	}
 
-	/** Pets do abrigo — parte do catálogo, portanto público. */
+	/** The shelter's pets -- part of the catalogue, therefore public. */
 	@GetMapping("/{id}/pets")
 	public PageResponse<PetResponse> pets(@PathVariable Long id,
 			@PageableDefault(size = 20) Pageable pageable) {
@@ -80,7 +80,7 @@ public class OrganizationController {
 		return PageResponse.from(pets.listOfOrganization(id, pageable), PetResponse::from);
 	}
 
-	// ======================================================= membros =========
+	// ======================================================= members =========
 
 	@GetMapping("/{id}/members")
 	public List<MemberResponse> members(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {

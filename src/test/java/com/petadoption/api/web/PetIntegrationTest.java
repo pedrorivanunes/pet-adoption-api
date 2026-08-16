@@ -17,7 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class PetIntegrationTest extends AbstractIntegrationTest {
 
 	@Test
-	@DisplayName("pessoa autenticada cadastra pet em nome próprio")
+	@DisplayName("an authenticated person registers a pet in their own name")
 	void createsOwnPet() throws Exception {
 		String token = tokenFor("tutora@example.com");
 
@@ -27,14 +27,14 @@ class PetIntegrationTest extends AbstractIntegrationTest {
 						.content(body(petPayload("Luna"))))
 				.andExpect(status().isCreated())
 				.andExpect(jsonPath("$.name").value("Luna"))
-				// espécie é normalizada: "dog" no pedido, "DOG" no catálogo
+				// species is normalised: "dog" in the request, "DOG" in the catalogue
 				.andExpect(jsonPath("$.species").value("DOG"))
 				.andExpect(jsonPath("$.status").value("AVAILABLE"))
 				.andExpect(jsonPath("$.owner.type").value("USER"));
 	}
 
 	@Test
-	@DisplayName("catálogo é público: lista e detalhe abrem sem token")
+	@DisplayName("the catalogue is public: list and detail open without a token")
 	void catalogIsPublic() throws Exception {
 		String token = tokenFor("catalogo@example.com");
 		long petId = createPet(token, "Bidu");
@@ -50,16 +50,16 @@ class PetIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("cadastrar pet exige token, mesmo o catálogo sendo público")
+	@DisplayName("registering a pet requires a token, even though the catalogue is public")
 	void createRequiresAuthentication() throws Exception {
 		mockMvc.perform(post("/api/pets")
 						.contentType(MediaType.APPLICATION_JSON)
-						.content(body(petPayload("Anônimo"))))
+						.content(body(petPayload("Anonymous"))))
 				.andExpect(status().isUnauthorized());
 	}
 
 	@Test
-	@DisplayName("a rota dos meus pets não é alcançável sem token")
+	@DisplayName("the my-pets route is not reachable without a token")
 	void myPetsRequiresAuthentication() throws Exception {
 		mockMvc.perform(get("/api/users/me/pets"))
 				.andExpect(status().isUnauthorized());
@@ -80,10 +80,10 @@ class PetIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("quem não é dono não edita nem apaga o pet")
+	@DisplayName("a non-owner neither edits nor deletes the pet")
 	void strangerCannotManageSomeoneElsesPet() throws Exception {
 		String owner = tokenFor("dona@example.com");
-		String stranger = tokenFor("estranho@example.com");
+		String stranger = tokenFor("stranger@example.com");
 		long petId = createPet(owner, "Mel");
 
 		mockMvc.perform(put("/api/pets/" + petId)
@@ -100,10 +100,10 @@ class PetIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("cadastrar pet para organização sem ter vínculo é negado")
+	@DisplayName("registering a pet for an organization without membership is denied")
 	void cannotCreatePetForOrganizationWithoutMembership() throws Exception {
-		String admin = tokenFor("abrigo-admin@example.com");
-		long orgId = createOrganization(admin, "Abrigo Esperança");
+		String admin = tokenFor("shelter-admin@example.com");
+		long orgId = createOrganization(admin, "Hope Shelter");
 
 		String stranger = tokenFor("de-fora@example.com");
 		Map<String, Object> payload = petPayload("Invasor");
@@ -117,16 +117,16 @@ class PetIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("STAFF da organização cadastra e edita pets dela — é o trabalho dele")
+	@DisplayName("organization STAFF registers and edits its pets -- that is their job")
 	void staffManagesOrganizationPets() throws Exception {
-		String admin = tokenFor("admin-abrigo@example.com");
-		long orgId = createOrganization(admin, "Abrigo Patas");
+		String admin = tokenFor("admin-shelter@example.com");
+		long orgId = createOrganization(admin, "Paws Shelter");
 
-		String staff = tokenFor("staff-abrigo@example.com");
+		String staff = tokenFor("staff-shelter@example.com");
 		mockMvc.perform(post("/api/organizations/" + orgId + "/members")
 						.header("Authorization", bearer(admin))
 						.contentType(MediaType.APPLICATION_JSON)
-						.content(body(Map.of("email", "staff-abrigo@example.com", "role", "STAFF"))))
+						.content(body(Map.of("email", "staff-shelter@example.com", "role", "STAFF"))))
 				.andExpect(status().isCreated());
 
 		Map<String, Object> payload = petPayload("Thor");
@@ -138,7 +138,7 @@ class PetIntegrationTest extends AbstractIntegrationTest {
 						.content(body(payload)))
 				.andExpect(status().isCreated())
 				.andExpect(jsonPath("$.owner.type").value("ORGANIZATION"))
-				.andExpect(jsonPath("$.owner.name").value("Abrigo Patas"))
+				.andExpect(jsonPath("$.owner.name").value("Paws Shelter"))
 				.andReturn().getResponse().getContentAsString();
 
 		long petId = json.readTree(created).get("id").longValue();
@@ -155,7 +155,7 @@ class PetIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("pet marcado como falecido não volta a outro estado")
+	@DisplayName("a pet marked deceased does not return to another state")
 	void deceasedIsTerminal() throws Exception {
 		String token = tokenFor("luto@example.com");
 		long petId = createPet(token, "Rex");
@@ -178,14 +178,14 @@ class PetIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("pet inexistente devolve 404, não 500")
+	@DisplayName("a missing pet returns 404, not 500")
 	void unknownPetReturnsNotFound() throws Exception {
 		mockMvc.perform(get("/api/pets/999999"))
 				.andExpect(status().isNotFound());
 	}
 
 	@Test
-	@DisplayName("data de nascimento no futuro é rejeitada com 400")
+	@DisplayName("a birth date in the future is rejected with 400")
 	void rejectsFutureBirthDate() throws Exception {
 		String token = tokenFor("futuro@example.com");
 		Map<String, Object> payload = petPayload("Viajante");

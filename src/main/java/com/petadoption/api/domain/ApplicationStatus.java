@@ -2,16 +2,16 @@ package com.petadoption.api.domain;
 
 public enum ApplicationStatus {
 
-	/** Aguardando decisão de quem cuida do pet. */
+	/** Waiting on a decision from whoever manages the pet. */
 	PENDING,
 
 	APPROVED,
 	REJECTED,
 
-	/** Desistência do próprio candidato. */
+	/** Withdrawn by the applicant themselves. */
 	CANCELED;
 
-	/** Candidatura já decidida não muda mais de estado. */
+	/** Once decided, an application does not change state again. */
 	public boolean isFinal() {
 		return this != PENDING;
 	}

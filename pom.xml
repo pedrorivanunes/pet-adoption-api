@@ -12,7 +12,7 @@
 	<artifactId>pet-adoption-api</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>pet-adoption-api</name>
-	<description>REST API para plataforma de adocao de pets</description>
+	<description>REST API for a pet adoption platform</description>
 	<url/>
 	<licenses>
 		<license/>
@@ -47,9 +47,9 @@
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 		<!--
-			Validação de JWT fica a cargo do resource server do próprio Spring
-			Security (assinatura, expiração, claims), em vez de um filtro escrito
-			à mão. Menos código nosso no caminho crítico de autenticação.
+			JWT validation is left to Spring Security's own resource server
+			(signature, expiry, claims) instead of a hand-written filter. Less of
+			our code on the critical authentication path.
 		-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -124,9 +124,8 @@
 			<scope>test</scope>
 		</dependency>
 		<!--
-			Declarado explicitamente (versão vem do BOM do Spring Boot) para que
-			o caminho do jar possa ser referenciado no argLine do surefire logo
-			abaixo.
+			Declared explicitly (the version comes from the Spring Boot BOM) so
+			that the jar path can be referenced in the surefire argLine below.
 		-->
 		<dependency>
 			<groupId>org.mockito</groupId>
@@ -143,9 +142,10 @@
 			</plugin>
 			<plugin>
 				<!--
-					Publica o caminho de cada dependência como propriedade
-					(${groupId:artifactId:jar}), que é o que permite apontar o
-					agente do Mockito no surefire logo abaixo sem fixar caminho.
+					Publishes each dependency's path as a property
+					(${groupId:artifactId:jar}), which is what lets the surefire
+					config below point at the Mockito agent without hard-coding
+					a path.
 				-->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
@@ -162,10 +162,10 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
 					<!--
-						Mockito precisa de um agente Java para instrumentar classes.
-						Sem isto ele se auto-anexa em tempo de execução e avisa que
-						JDKs futuros vão proibir isso; declarar o agente aqui é a
-						forma suportada e deixa o build limpo.
+						Mockito needs a Java agent to instrument classes. Without
+						this it self-attaches at runtime and warns that future
+						JDKs will forbid that; declaring the agent here is the
+						supported way and keeps the build clean.
 					-->
 					<argLine>-javaagent:${org.mockito:mockito-core:jar}</argLine>
 				</configuration>

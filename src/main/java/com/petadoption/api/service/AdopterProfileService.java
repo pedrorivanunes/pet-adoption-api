@@ -39,12 +39,12 @@ public class AdopterProfileService {
 	}
 
 	/**
-	 * Cria ou atualiza o perfil de quem está autenticado.
+	 * Creates or updates the authenticated person's profile.
 	 *
-	 * <p>É um PUT idempotente e não um POST: a pessoa tem no máximo um perfil —
-	 * fato garantido pela chave primária compartilhada — então "criar" e
-	 * "editar" são a mesma operação, e o cliente não precisa saber em qual dos
-	 * dois casos está.
+	 * <p>It is an idempotent PUT rather than a POST: a person has at most one
+	 * profile -- a fact guaranteed by the shared primary key -- so "create" and
+	 * "edit" are the same operation, and the client does not need to know which
+	 * of the two cases it is in.
 	 */
 	@Transactional
 	public AdopterProfile save(ProfileData data, String actorEmail) {
@@ -60,9 +60,9 @@ public class AdopterProfileService {
 		profile.setHasChildren(isTrue(data.hasChildren()));
 		profile.setResidentsCount(data.residentsCount());
 		profile.setHasOtherPets(isTrue(data.hasOtherPets()));
-		// Disponibilidade de tempo assume "sim" quando não informada: é o caso
-		// comum, e o fator impeditivo só deve disparar com uma negativa
-		// explícita da pessoa.
+		// Time availability defaults to "yes" when not stated: that is the
+		// common case, and the blocker should only fire on an explicit "no"
+		// from the person.
 		profile.setHasTimeAvailability(data.hasTimeAvailability() == null || data.hasTimeAvailability());
 
 		profile.setPreferredSpecies(normalizeSpecies(data.preferredSpecies()));
@@ -81,7 +81,7 @@ public class AdopterProfileService {
 		User actor = users.getByEmail(actorEmail);
 		return profiles.findById(actor.getId())
 				.orElseThrow(() -> new NotFoundException(
-						"Você ainda não preencheu seu perfil de adotante."));
+						"You have not filled in your adopter profile yet."));
 	}
 
 	@Transactional(readOnly = true)
@@ -93,7 +93,7 @@ public class AdopterProfileService {
 		return value != null && value;
 	}
 
-	/** Mesma forma canônica usada no cadastro do pet, senão o filtro não casa. */
+	/** The same canonical form used when registering a pet, or the filter misses. */
 	private static String normalizeSpecies(String species) {
 		return species == null || species.isBlank() ? null : species.trim().toUpperCase(Locale.ROOT);
 	}

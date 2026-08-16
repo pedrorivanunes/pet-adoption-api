@@ -11,28 +11,28 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
 /**
- * Igual ao cadastro, menos o dono: transferir um pet de tutor ou de abrigo é
- * uma operação de negócio própria — com histórico de rastreabilidade — e não um
- * campo que se troca numa edição comum.
+ * Same as registration, minus the owner: moving a pet to another guardian or
+ * shelter is a business operation of its own -- with a traceability record --
+ * and not a field you swap in an ordinary edit.
  */
 public record UpdatePetRequest(
 
-		@NotBlank(message = "nome é obrigatório")
-		@Size(max = 100, message = "nome deve ter no máximo 100 caracteres")
+		@NotBlank(message = "name is required")
+		@Size(max = 100, message = "name must be at most 100 characters")
 		String name,
 
-		@NotBlank(message = "espécie é obrigatória (ex.: DOG, CAT)")
-		@Size(max = 30, message = "espécie deve ter no máximo 30 caracteres")
+		@NotBlank(message = "species is required (e.g. DOG, CAT)")
+		@Size(max = 30, message = "species must be at most 30 characters")
 		String species,
 
-		@Size(max = 100, message = "raça deve ter no máximo 100 caracteres")
+		@Size(max = 100, message = "breed must be at most 100 characters")
 		String breed,
 
 		PetSex sex,
 
 		PetSize size,
 
-		@PastOrPresent(message = "data de nascimento não pode estar no futuro")
+		@PastOrPresent(message = "birth date cannot be in the future")
 		LocalDate birthDate,
 
 		Boolean birthDateEstimated,
@@ -46,7 +46,7 @@ public record UpdatePetRequest(
 
 		Boolean goodWithOtherAnimals,
 
-		@Size(max = 1000, message = "observações de saúde devem ter no máximo 1000 caracteres")
+		@Size(max = 1000, message = "health notes must be at most 1000 characters")
 		String healthNotes) {
 
 	public PetService.PetData toData() {

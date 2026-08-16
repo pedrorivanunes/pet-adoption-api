@@ -36,8 +36,8 @@ public class AdoptionApplicationController {
 	}
 
 	/**
-	 * "Quero adotar": pets disponíveis ranqueados por compatibilidade com quem
-	 * está autenticado. Animais com fator impeditivo não aparecem.
+	 * "I want to adopt": available pets ranked by how well they match the
+	 * authenticated person. Animals with a blocker do not appear.
 	 */
 	@GetMapping("/adoptions/matches")
 	public PageResponse<MatchResponse> matches(@AuthenticationPrincipal Jwt jwt,
@@ -69,13 +69,13 @@ public class AdoptionApplicationController {
 	}
 
 	/**
-	 * Relatório de compatibilidade de um pet: as candidaturas recebidas,
-	 * ranqueadas por afinidade, visíveis só a quem administra o animal.
+	 * A pet's compatibility report: the applications received, ranked by
+	 * affinity, visible only to whoever manages the animal.
 	 *
-	 * <p>O ranking cobre quem se candidatou, e não toda a base de adotantes.
-	 * Perfil de adotante tem moradia, filhos e quantas pessoas moram na casa —
-	 * informação que um abrigo só tem motivo de ver quando a pessoa procurou por
-	 * aquele animal.
+	 * <p>The ranking covers the people who applied, not the whole adopter base.
+	 * An adopter profile holds housing, children and how many people live in the
+	 * home -- information a shelter only has reason to see once that person has
+	 * come forward for that animal.
 	 */
 	@GetMapping("/pets/{petId}/applications")
 	public PageResponse<ApplicationResponse> forPet(@PathVariable Long petId,
@@ -87,9 +87,9 @@ public class AdoptionApplicationController {
 				applications.listForPet(petId, jwt.getSubject(), pageable), ApplicationResponse::from);
 	}
 
-	// As decisões são POST em sub-recursos, e não um PATCH de status: aprovar
-	// não é "escrever APPROVED no campo", é um evento que move o pet, cria a
-	// adoção e recusa os demais candidatos.
+	// Decisions are POSTs on sub-resources rather than a PATCH of the status:
+	// approving is not "write APPROVED into the field", it is an event that
+	// moves the pet, creates the adoption and rejects the other applicants.
 	@PostMapping("/adoptions/applications/{id}/approve")
 	public ApplicationResponse approve(@PathVariable Long id,
 			@Valid @RequestBody(required = false) DecisionRequest request,

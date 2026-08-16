@@ -20,7 +20,7 @@ import java.time.OffsetDateTime;
 import java.time.Period;
 import java.time.temporal.ChronoUnit;
 
-/** Um trecho da linha do tempo do animal: onde esteve, com quem e por quanto tempo. */
+/** One stretch of the animal's timeline: where it was, with whom, and for how long. */
 @Entity
 @Table(name = "pet_stays")
 @Getter
@@ -53,7 +53,7 @@ public class PetStay {
 	@Column(name = "started_on", nullable = false)
 	private LocalDate startedOn;
 
-	/** Nulo enquanto o animal ainda está lá. */
+	/** Null while the animal is still there. */
 	@Column(name = "ended_on")
 	private LocalDate endedOn;
 
@@ -67,7 +67,7 @@ public class PetStay {
 		return endedOn == null;
 	}
 
-	/** Dias de permanência; se ainda aberta, conta até hoje. */
+	/** Days of the stay; if still open, counts up to today. */
 	public long durationInDays() {
 		return ChronoUnit.DAYS.between(startedOn, endedOn == null ? LocalDate.now() : endedOn);
 	}

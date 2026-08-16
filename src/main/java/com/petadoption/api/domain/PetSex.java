@@ -5,6 +5,6 @@ public enum PetSex {
 	MALE,
 	FEMALE,
 
-	/** Animal resgatado nem sempre chega com o sexo determinado. */
+	/** A rescued animal does not always arrive with its sex determined. */
 	UNKNOWN
 }

@@ -11,24 +11,24 @@ import jakarta.validation.constraints.Size;
 
 public record AdopterProfileRequest(
 
-		@NotNull(message = "tipo de moradia é obrigatório (HOUSE, APARTMENT ou RURAL)")
+		@NotNull(message = "housing type is required (HOUSE, APARTMENT or RURAL)")
 		HousingType housingType,
 
 		Boolean hasChildren,
 
-		@PositiveOrZero(message = "número de moradores não pode ser negativo")
-		@Max(value = 50, message = "número de moradores parece implausível")
+		@PositiveOrZero(message = "number of residents cannot be negative")
+		@Max(value = 50, message = "number of residents looks implausible")
 		Integer residentsCount,
 
 		Boolean hasOtherPets,
 
-		/** Fator impeditivo para animais que exigem cuidados constantes. */
+		/** A blocker for animals that require constant care. */
 		Boolean hasTimeAvailability,
 
-		@Size(max = 30, message = "espécie desejada deve ter no máximo 30 caracteres")
+		@Size(max = 30, message = "preferred species must be at most 30 characters")
 		String preferredSpecies,
 
-		@Size(max = 100, message = "raça desejada deve ter no máximo 100 caracteres")
+		@Size(max = 100, message = "preferred breed must be at most 100 characters")
 		String preferredBreed,
 
 		PetSize preferredSize,

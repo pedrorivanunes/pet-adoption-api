@@ -51,8 +51,8 @@ public record PetResponse(
 				pet.getHealthNotes());
 	}
 
-	// Idade é derivada da data de nascimento, nunca armazenada: número guardado
-	// envelhece errado.
+	// Age is derived from the birth date, never stored: a stored number ages
+	// wrong.
 	private static Integer ageOf(LocalDate birthDate) {
 		return birthDate == null ? null : Period.between(birthDate, LocalDate.now()).getYears();
 	}

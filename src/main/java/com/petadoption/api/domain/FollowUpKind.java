@@ -1,6 +1,6 @@
 package com.petadoption.api.domain;
 
-/** Como o contato de acompanhamento aconteceu. */
+/** How the follow-up contact happened. */
 public enum FollowUpKind {
 
 	VISIT,

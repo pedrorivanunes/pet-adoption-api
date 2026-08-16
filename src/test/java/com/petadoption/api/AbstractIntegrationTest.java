@@ -13,17 +13,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Base para testes que precisam de usuários autenticados de verdade.
+ * Base for tests that need genuinely authenticated users.
  *
- * <p>Os tokens são obtidos passando pelos endpoints reais de cadastro e login,
- * e não fabricados no teste: um token forjado no próprio teste validaria só a
- * fabricação, não a cadeia que a aplicação de fato usa.
+ * <p>Tokens are obtained by going through the real registration and login
+ * endpoints rather than being manufactured in the test: a token forged inside
+ * the test would only validate the forging, not the chain the application
+ * actually uses.
  */
 @IntegrationTest
 @Transactional
 public abstract class AbstractIntegrationTest {
 
-	protected static final String PASSWORD = "senha-super-secreta";
+	protected static final String PASSWORD = "a-very-secret-password";
 
 	@Autowired
 	protected MockMvc mockMvc;
@@ -31,7 +32,7 @@ public abstract class AbstractIntegrationTest {
 	@Autowired
 	protected ObjectMapper json;
 
-	/** Cadastra a pessoa e devolve um token de acesso válido para ela. */
+	/** Registers the person and returns a valid access token for them. */
 	protected String tokenFor(String email) throws Exception {
 		mockMvc.perform(post("/api/auth/register")
 						.contentType(MediaType.APPLICATION_JSON)
@@ -82,7 +83,7 @@ public abstract class AbstractIntegrationTest {
 		return json.readTree(response).get("id").longValue();
 	}
 
-	/** Perfil mínimo válido — o suficiente para poder se candidatar. */
+	/** The minimum valid profile -- enough to be able to apply. */
 	protected void saveAdopterProfile(String token) throws Exception {
 		mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 						.put("/api/users/me/adopter-profile")

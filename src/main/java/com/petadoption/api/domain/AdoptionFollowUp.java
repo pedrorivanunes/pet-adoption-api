@@ -18,7 +18,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
-/** Visita ou interação registrada durante o acompanhamento pós-adoção. */
+/** A visit or interaction logged during the post-adoption follow-up. */
 @Entity
 @Table(name = "adoption_followups")
 @Getter

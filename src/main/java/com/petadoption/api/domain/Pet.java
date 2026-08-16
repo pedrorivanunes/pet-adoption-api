@@ -53,8 +53,8 @@ public class Pet {
 	@Column(nullable = false)
 	private PetStatus status = PetStatus.AVAILABLE;
 
-	// Dono é pessoa OU organização — o banco garante por CHECK que é
-	// exatamente um dos dois.
+	// The owner is either a person OR an organization -- a CHECK constraint in
+	// the database guarantees it is exactly one of the two.
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "owner_user_id")
 	private User ownerUser;
@@ -75,8 +75,8 @@ public class Pet {
 	@Column(name = "requires_constant_care", nullable = false)
 	private boolean requiresConstantCare;
 
-	// Objeto, e não primitivo, de propósito: null aqui significa "não se sabe",
-	// que é diferente de "não convive". Só o segundo é fator impeditivo.
+	// Boxed on purpose rather than primitive: null here means "unknown", which
+	// is different from "does not get along". Only the latter is a blocker.
 	@Column(name = "good_with_other_animals")
 	private Boolean goodWithOtherAnimals;
 

@@ -12,12 +12,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Verifica que as migrations do Flyway aplicam num banco limpo e produzem o
- * schema esperado.
+ * Checks that the Flyway migrations apply to a clean database and produce the
+ * expected schema.
  *
- * <p>O container do Postgres sobe zerado a cada execução, então este teste
- * exercita o caminho que mais dói quando quebra: o de um ambiente novo. Uma
- * migration que só funciona sobre um banco já existente falha aqui.
+ * <p>The Postgres container comes up empty on every run, so this test exercises
+ * the path that hurts most when it breaks: a brand-new environment. A migration
+ * that only works against an existing database fails here.
  */
 @IntegrationTest
 @Transactional
@@ -27,7 +27,7 @@ class SchemaMigrationTest {
 	private JdbcTemplate jdbc;
 
 	@Test
-	@DisplayName("as migrations criam todas as tabelas do núcleo")
+	@DisplayName("migrations create every core table")
 	void migrationsCreateCoreTables() {
 		List<String> tables = jdbc.queryForList("""
 				SELECT table_name
@@ -45,7 +45,7 @@ class SchemaMigrationTest {
 	}
 
 	@Test
-	@DisplayName("os papéis globais são semeados sem o prefixo ROLE_")
+	@DisplayName("global roles are seeded without the ROLE_ prefix")
 	void seedsGlobalRolesWithoutRolePrefix() {
 		List<String> roles = jdbc.queryForList(
 				"SELECT name FROM roles ORDER BY name", String.class);
@@ -54,7 +54,7 @@ class SchemaMigrationTest {
 	}
 
 	@Test
-	@DisplayName("e-mail de usuário é único ignorando maiúsculas")
+	@DisplayName("user email is unique regardless of case")
 	void userEmailIsUniqueCaseInsensitively() {
 		jdbc.update("""
 				INSERT INTO users (name, email, password_hash)
@@ -69,7 +69,7 @@ class SchemaMigrationTest {
 	}
 
 	@Test
-	@DisplayName("pet precisa de exatamente um dono: pessoa ou organização")
+	@DisplayName("a pet needs exactly one owner: a person or an organization")
 	void petRequiresExactlyOneOwner() {
 		assertThatThrownBy(() -> jdbc.update("""
 				INSERT INTO pets (name, species, status)
@@ -79,10 +79,10 @@ class SchemaMigrationTest {
 	}
 
 	@Test
-	@DisplayName("status de pet fora do domínio é rejeitado pelo banco")
+	@DisplayName("a pet status outside the domain is rejected by the database")
 	void petStatusIsConstrained() {
 		Long orgId = jdbc.queryForObject("""
-				INSERT INTO organizations (name) VALUES ('Abrigo Teste') RETURNING id
+				INSERT INTO organizations (name) VALUES ('Test Shelter') RETURNING id
 				""", Long.class);
 
 		assertThatThrownBy(() -> jdbc.update("""

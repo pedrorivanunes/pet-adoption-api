@@ -10,10 +10,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 /**
- * As associações de dono são LAZY na entidade, mas a resposta da API precisa
- * delas. O entity graph traz as duas na mesma consulta: sem ele, ou estoura
- * LazyInitializationException fora da transação (open-in-view está desligado),
- * ou cada pet da listagem dispara uma consulta extra — o clássico N+1.
+ * The owner associations are LAZY on the entity, but the API response needs
+ * them. The entity graph fetches both in the same query: without it, either a
+ * LazyInitializationException blows up outside the transaction (open-in-view is
+ * off), or every pet in a listing fires an extra query -- the classic N+1.
  */
 public interface PetRepository extends JpaRepository<Pet, Long> {
 

@@ -10,16 +10,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Teste de integração com PostgreSQL real via Testcontainers.
+ * An integration test against a real PostgreSQL via Testcontainers.
  *
- * <p>O segredo do JWT é fornecido aqui e em nenhum outro lugar: a aplicação não
- * define valor padrão, então esquecer de configurá-lo derruba o boot. Este é o
- * ponto onde o ambiente de teste assume essa responsabilidade explicitamente.
+ * <p>The JWT secret is supplied here and nowhere else: the application defines
+ * no default, so forgetting to configure it brings the boot down. This is the
+ * point where the test environment takes that responsibility explicitly.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @SpringBootTest(properties = {
-		"app.security.jwt.secret=segredo-exclusivo-de-teste-com-mais-de-32-caracteres",
+		"app.security.jwt.secret=test-only-secret-with-more-than-32-characters",
 		"app.security.jwt.ttl=PT1H"
 })
 @AutoConfigureMockMvc

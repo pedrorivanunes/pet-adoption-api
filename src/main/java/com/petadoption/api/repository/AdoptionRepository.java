@@ -11,9 +11,9 @@ public interface AdoptionRepository extends JpaRepository<Adoption, Long> {
 	boolean existsByPet_Id(Long petId);
 
 	/**
-	 * A adoção vigente do animal. Um pet pode, em tese, ter mais de uma ao longo
-	 * da vida (devolução e nova adoção), então a mais recente é a que vale para
-	 * o acompanhamento.
+	 * The animal's current adoption. A pet can in principle have more than one
+	 * over its life (returned and adopted again), so the most recent one is what
+	 * counts for the follow-up.
 	 */
 	@EntityGraph(attributePaths = { "pet", "adopter", "originUser", "originOrg" })
 	Optional<Adoption> findFirstByPet_IdOrderByAdoptedOnDescIdDesc(Long petId);

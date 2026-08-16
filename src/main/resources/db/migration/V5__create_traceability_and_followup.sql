@@ -1,18 +1,18 @@
 -- =========================================================================
--- V5 -- Histórico de rastreabilidade, saúde do animal e acompanhamento
---       pós-adoção.
+-- V5 -- Traceability history, animal health and post-adoption follow-up.
 -- =========================================================================
 
 
 -- =========================================================================
--- PERMANÊNCIAS (RASTREABILIDADE)
+-- STAYS (TRACEABILITY)
 --
--- A linha do tempo do animal é modelada como intervalos, não como eventos
--- pontuais: a pergunta do domínio é "onde esteve e por quanto tempo", e
--- duração se extrai de um intervalo, não de um instante.
+-- The animal's timeline is modelled as intervals rather than point events: the
+-- domain question is "where was it and for how long", and duration comes out of
+-- an interval, not an instant.
 --
--- started_on pode ser anterior ao cadastro do pet no sistema -- o resgate
--- quase sempre é. Por isso a data é informada, e não derivada de created_at.
+-- started_on may predate the pet's registration in the system -- a rescue
+-- almost always does. That is why the date is supplied rather than derived from
+-- created_at.
 -- =========================================================================
 
 CREATE TABLE pet_stays (
@@ -22,8 +22,9 @@ CREATE TABLE pet_stays (
     kind              VARCHAR(20)  NOT NULL,
     location          VARCHAR(255) NOT NULL,
 
-    -- Quem tinha a guarda. Ambos nulos é permitido de propósito: o período de
-    -- rua antes do resgate não tem responsável, e fingir que tem seria mentir.
+    -- Who held custody. Both null is allowed on purpose: the time on the street
+    -- before the rescue has nobody responsible, and pretending otherwise would
+    -- be a lie.
     custodian_user_id BIGINT       REFERENCES users(id)         ON DELETE SET NULL,
     custodian_org_id  BIGINT       REFERENCES organizations(id) ON DELETE SET NULL,
 
@@ -37,9 +38,9 @@ CREATE TABLE pet_stays (
     CONSTRAINT ck_stay_custodian CHECK (NOT (custodian_user_id IS NOT NULL AND custodian_org_id IS NOT NULL))
 );
 
--- Um animal está num lugar de cada vez: no máximo uma permanência aberta.
--- Mesmo recurso usado para "uma candidatura pendente por pessoa" -- índice
--- único parcial, porque a regra vale só para as linhas em aberto.
+-- An animal is in one place at a time: at most one open stay. The same device
+-- used for "one pending application per person" -- a partial unique index,
+-- because the rule holds only for the open rows.
 CREATE UNIQUE INDEX ux_pet_stays_single_open
     ON pet_stays (pet_id)
     WHERE ended_on IS NULL;
@@ -48,30 +49,30 @@ CREATE INDEX idx_pet_stays_pet ON pet_stays (pet_id, started_on);
 
 
 -- =========================================================================
--- ORIGEM DA ADOÇÃO
+-- ADOPTION ORIGIN
 --
--- Quem entregou o animal. Ao aprovar, a tutoria passa para o adotante -- e
--- sem este registro se perderia justamente quem tem o dever de acompanhar os
--- seis meses seguintes.
+-- Who handed the animal over. On approval, guardianship passes to the adopter
+-- -- and without this record we would lose precisely the party who owes the
+-- follow-up over the next six months.
 -- =========================================================================
 
 ALTER TABLE adoptions ADD COLUMN origin_user_id BIGINT REFERENCES users(id)         ON DELETE RESTRICT;
 ALTER TABLE adoptions ADD COLUMN origin_org_id  BIGINT REFERENCES organizations(id) ON DELETE RESTRICT;
 
--- "No máximo um", e não "exatamente um": adoções registradas antes desta
--- migration não têm origem, e uma restrição que as invalidasse faria o deploy
--- falhar em qualquer ambiente que já tivesse dados.
+-- "At most one", not "exactly one": adoptions recorded before this migration
+-- have no origin, and a constraint that invalidated them would make the deploy
+-- fail in any environment that already had data.
 ALTER TABLE adoptions ADD CONSTRAINT ck_adoption_origin CHECK (
     NOT (origin_user_id IS NOT NULL AND origin_org_id IS NOT NULL)
 );
 
 
 -- =========================================================================
--- SAÚDE DO ANIMAL
+-- ANIMAL HEALTH
 --
--- Pendurado no pet, e não na adoção: vacina e castração são história do
--- animal para a vida inteira, não de um contrato de adoção. O relatório de
--- acompanhamento apenas recorta a janela que lhe interessa.
+-- Hung off the pet, not off the adoption: vaccination and neutering are the
+-- animal's history for life, not an adoption contract's. The follow-up report
+-- merely crops the window it cares about.
 -- =========================================================================
 
 CREATE TABLE pet_health_records (
@@ -91,7 +92,7 @@ CREATE INDEX idx_health_records_pet ON pet_health_records (pet_id, occurred_on);
 
 
 -- =========================================================================
--- ACOMPANHAMENTO PÓS-ADOÇÃO
+-- POST-ADOPTION FOLLOW-UP
 -- =========================================================================
 
 CREATE TABLE adoption_followups (

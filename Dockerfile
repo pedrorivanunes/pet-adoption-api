@@ -4,22 +4,23 @@
 FROM eclipse-temurin:21-jdk-alpine AS build
 WORKDIR /build
 
-# Dependências numa camada própria, antes do código-fonte: alterar uma classe
-# não invalida o cache e não força baixar o Maven inteiro de novo.
+# Dependencies in a layer of their own, ahead of the source: changing a class
+# does not invalidate the cache and does not force downloading Maven all over.
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
 RUN chmod +x mvnw && ./mvnw -B -ntp dependency:go-offline
 
 COPY src/ src/
-# Testes são pulados aqui de propósito: a suíte usa Testcontainers, que precisa
-# de um Docker daemon -- indisponível dentro do build da imagem. Quem roda os
-# testes é o CI (e a sua máquina), antes da imagem ser construída.
+# Tests are skipped here on purpose: the suite uses Testcontainers, which needs
+# a Docker daemon -- not available inside an image build. CI (and your machine)
+# is what runs the tests, before the image is built.
 RUN ./mvnw -B -ntp clean package -DskipTests
 
 # -------------------------------------------------------------- runtime ----
 FROM eclipse-temurin:21-jre-alpine AS runtime
 
-# Imagem final leva só o JRE, não o JDK, e roda como usuário sem privilégios.
+# The final image carries only the JRE, not the JDK, and runs as an
+# unprivileged user.
 RUN addgroup -S app && adduser -S -G app app
 
 WORKDIR /app

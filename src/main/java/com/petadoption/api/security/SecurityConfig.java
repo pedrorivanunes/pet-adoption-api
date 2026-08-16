@@ -33,29 +33,31 @@ public class SecurityConfig {
 			throws Exception {
 
 		return http
-				// API sem sessão e sem cookies: não há o que um ataque CSRF
-				// possa reaproveitar, já que o token vai no header Authorization.
+				// A sessionless, cookieless API: there is nothing for a CSRF
+				// attack to replay, since the token travels in the Authorization
+				// header.
 				.csrf(csrf -> csrf.disable())
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
 						.requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**").permitAll()
 
-						// Catálogo público de adoção. Os padrões usam UM
-						// asterisco, não dois: "/api/pets/**" pegaria também
-						// sub-rotas futuras como "/api/pets/{id}/histórico", e
-						// liberaria sem querer o que nascer ali embaixo.
+						// The public adoption catalogue. These patterns use ONE
+						// asterisk, not two: "/api/pets/**" would also match
+						// future sub-routes such as "/api/pets/{id}/history",
+						// and would expose whatever gets added down there.
 						.requestMatchers(HttpMethod.GET, "/api/pets", "/api/pets/*").permitAll()
 						.requestMatchers(HttpMethod.GET, "/api/organizations", "/api/organizations/*").permitAll()
 						.requestMatchers(HttpMethod.GET, "/api/organizations/*/pets").permitAll()
-						// A trajetória do animal é parte do catálogo: saber que
-						// foi resgatado e por onde passou é o que dá confiança
-						// à adoção. Já a ficha de saúde, em /health-records,
-						// continua fora — detalhe clínico não é vitrine.
+						// The animal's history is part of the catalogue: knowing
+						// it was rescued and where it has been is what gives an
+						// adopter confidence. The health record, at
+						// /health-records, stays out -- clinical detail is not
+						// a shop window.
 						.requestMatchers(HttpMethod.GET, "/api/pets/*/history").permitAll()
-						// Regra final restritiva: rota nova nasce protegida. O
-						// inverso — liberar por padrão e lembrar de proteger —
-						// falha exatamente no dia em que alguém esquece.
+						// A restrictive final rule: a new route is born
+						// protected. The inverse -- open by default and remember
+						// to protect -- fails on exactly the day someone forgets.
 						.anyRequest().authenticated())
 				.oauth2ResourceServer(oauth2 -> oauth2
 						.jwt(jwt -> jwt.jwtAuthenticationConverter(converter)))
@@ -63,13 +65,13 @@ public class SecurityConfig {
 	}
 
 	/**
-	 * Converte o claim {@code authorities} do token em GrantedAuthority.
+	 * Turns the token's {@code authorities} claim into GrantedAuthority values.
 	 *
-	 * <p>O prefixo é explicitamente vazio. Por padrão este conversor prependeria
-	 * {@code SCOPE_}, e a variante por papéis prependeria {@code ROLE_} — em
-	 * ambos os casos a autoridade efetiva deixaria de ser o que está escrito no
-	 * banco, e a regra de autorização passaria a depender de uma concatenação
-	 * invisível.
+	 * <p>The prefix is explicitly empty. By default this converter would prepend
+	 * {@code SCOPE_}, and the role-based variant would prepend {@code ROLE_} --
+	 * in either case the effective authority would stop being what is written in
+	 * the database, and the authorization rules would come to depend on an
+	 * invisible concatenation.
 	 */
 	@Bean
 	JwtAuthenticationConverter jwtAuthenticationConverter() {

@@ -12,13 +12,13 @@ import lombok.Setter;
 import java.util.Objects;
 
 /**
- * Papel global, propositalmente de granularidade grossa (USER, ADMIN).
+ * A global role, deliberately coarse-grained (USER, ADMIN).
  *
- * <p>O nome é guardado exatamente como será comparado — sem o prefixo
- * {@code ROLE_}. Esse prefixo é convenção interna do Spring Security, e
- * concatená-lo em algum ponto do caminho é como se produz o clássico
- * {@code ROLE_ROLE_ADMIN}, que quebra a autorização sem lançar erro nenhum.
- * Aqui a aplicação usa {@code hasAuthority} com o nome literal.
+ * <p>The name is stored exactly as it will be compared -- without the
+ * {@code ROLE_} prefix. That prefix is a Spring Security internal convention,
+ * and concatenating it somewhere along the way is how you produce the classic
+ * {@code ROLE_ROLE_ADMIN}, which breaks authorization without throwing anything.
+ * Here the application uses {@code hasAuthority} with the literal name.
  */
 @Entity
 @Table(name = "roles")
@@ -36,9 +36,9 @@ public class Role {
 	@Column(nullable = false)
 	private String name;
 
-	// Igualdade por nome, não por identidade de objeto: Role vive dentro de um
-	// Set em User, e comparar por referência faria o mesmo papel entrar duas
-	// vezes quando carregado em contextos diferentes.
+	// Equality by name, not by object identity: Role lives inside a Set on User,
+	// and comparing by reference would let the same role enter twice when loaded
+	// in different contexts.
 	@Override
 	public boolean equals(Object other) {
 		if (this == other) {

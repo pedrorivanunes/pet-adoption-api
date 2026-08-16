@@ -12,6 +12,6 @@ public interface PetStayRepository extends JpaRepository<PetStay, Long> {
 	@EntityGraph(attributePaths = { "custodianUser", "custodianOrg" })
 	List<PetStay> findByPet_IdOrderByStartedOnAscIdAsc(Long petId);
 
-	/** A permanência atual — no máximo uma, garantido por índice único parcial. */
+	/** The current stay -- at most one, guaranteed by a partial unique index. */
 	Optional<PetStay> findByPet_IdAndEndedOnIsNull(Long petId);
 }

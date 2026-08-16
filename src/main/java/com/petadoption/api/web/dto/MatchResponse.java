@@ -5,11 +5,11 @@ import com.petadoption.api.service.CompatibilityService;
 import java.util.List;
 
 /**
- * Um pet do resultado de "quero adotar", com a decomposição do score.
+ * A pet in the "I want to adopt" result, with the score broken down.
  *
- * <p>Devolver os fatores, e não só o número, é o que permite à interface
- * explicar por que aquele animal apareceu ali — e à pessoa discordar com
- * argumento.
+ * <p>Returning the factors rather than just the number is what lets a client
+ * explain why that animal showed up where it did -- and lets the person disagree
+ * with an argument.
  */
 public record MatchResponse(PetResponse pet, int score, List<FactorResponse> factors) {
 

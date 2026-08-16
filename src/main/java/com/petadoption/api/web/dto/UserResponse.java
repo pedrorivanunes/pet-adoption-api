@@ -5,7 +5,7 @@ import com.petadoption.api.domain.User;
 
 import java.util.List;
 
-/** Projeção pública do usuário. O hash da senha não tem representação aqui. */
+/** The public projection of a user. The password hash has no representation here. */
 public record UserResponse(
 		Long id,
 		String name,

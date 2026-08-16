@@ -18,7 +18,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Linha do tempo do animal: onde esteve, com quem, e sua história de saúde.
+ * The animal's timeline: where it has been, with whom, and its health history.
  */
 @Service
 public class PetHistoryService {
@@ -54,16 +54,15 @@ public class PetHistoryService {
 	public record HealthData(HealthRecordKind kind, LocalDate occurredOn, String description) {
 	}
 
-	// ================================================= rastreabilidade =======
+	// ==================================================== traceability =======
 
 	/**
-	 * Registra uma nova permanência, encerrando a anterior na data em que esta
-	 * começa.
+	 * Records a new stay, closing the previous one on the date this one starts.
 	 *
-	 * <p>A linha do tempo não tem buracos nem sobreposições porque o encerramento
-	 * é consequência da abertura, e não uma segunda chamada que alguém pode
-	 * esquecer de fazer. O banco reforça com índice único parcial: no máximo uma
-	 * permanência aberta por animal.
+	 * <p>The timeline has no gaps and no overlaps because closing is a
+	 * consequence of opening, not a second call someone can forget to make. The
+	 * database backs this with a partial unique index: at most one open stay per
+	 * animal.
 	 */
 	@Transactional
 	public PetStay addStay(Long petId, StayData data, String actorEmail) {
@@ -76,8 +75,8 @@ public class PetHistoryService {
 
 		if (data.custodianOrganizationId() != null) {
 			custodianOrg = organizations.findById(data.custodianOrganizationId())
-					.orElseThrow(() -> NotFoundException.of("Organização", data.custodianOrganizationId()));
-			// Só se registra guarda de uma organização da qual se faz parte.
+					.orElseThrow(() -> NotFoundException.of("Organization", data.custodianOrganizationId()));
+			// You can only record custody for an organization you belong to.
 			organizationAccess.requireMember(custodianOrg.getId(), actor);
 		}
 		else if (pet.isOwnedByOrganization()) {
@@ -92,9 +91,9 @@ public class PetHistoryService {
 	}
 
 	/**
-	 * Abre uma permanência encerrando a anterior. Sem verificação de permissão:
-	 * é chamada por serviços que já validaram o direito de agir — a aprovação de
-	 * adoção, por exemplo.
+	 * Opens a stay, closing the previous one. No permission check here: it is
+	 * called by services that have already validated the right to act -- the
+	 * adoption approval, for instance.
 	 */
 	@Transactional
 	public PetStay openStay(Pet pet, StayKind kind, String location, LocalDate startedOn, String notes,
@@ -104,15 +103,15 @@ public class PetHistoryService {
 
 		stays.findByPet_IdAndEndedOnIsNull(pet.getId()).ifPresent(current -> {
 			if (start.isBefore(current.getStartedOn())) {
-				throw new ConflictException("A nova permanência começa antes da permanência atual ("
+				throw new ConflictException("The new stay starts before the current stay ("
 						+ current.getStartedOn() + ").");
 			}
 			current.setEndedOn(start);
-			// Flush explícito, e não save(). No flush automático o Hibernate
-			// ordena todos os INSERTs antes dos UPDATEs, então a permanência
-			// nova entraria com a anterior ainda aberta — e o índice único
-			// parcial recusaria, com razão. Fechar antes de abrir é a ordem
-			// correta também conceitualmente.
+			// An explicit flush, not save(). On automatic flush Hibernate orders
+			// every INSERT before the UPDATEs, so the new stay would go in while
+			// the previous one was still open -- and the partial unique index
+			// would refuse, rightly. Closing before opening is also the
+			// conceptually correct order.
 			stays.saveAndFlush(current);
 		});
 
@@ -127,7 +126,7 @@ public class PetHistoryService {
 		return stays.save(stay);
 	}
 
-	/** Histórico completo, do resgate para frente. */
+	/** The full history, from the rescue onwards. */
 	@Transactional(readOnly = true)
 	public List<PetStay> historyOf(Long petId) {
 		if (!pets.existsById(petId)) {
@@ -136,7 +135,7 @@ public class PetHistoryService {
 		return stays.findByPet_IdOrderByStartedOnAscIdAsc(petId);
 	}
 
-	// ========================================================== saúde ========
+	// ========================================================= health ========
 
 	@Transactional
 	public PetHealthRecord addHealthRecord(Long petId, HealthData data, String actorEmail) {
@@ -145,7 +144,7 @@ public class PetHistoryService {
 		petAccess.requireCanManage(pet, actor);
 
 		if (data.occurredOn().isAfter(LocalDate.now())) {
-			throw new ConflictException("Um evento de saúde não acontece no futuro.");
+			throw new ConflictException("A health event does not happen in the future.");
 		}
 
 		PetHealthRecord record = new PetHealthRecord();
@@ -158,9 +157,9 @@ public class PetHistoryService {
 	}
 
 	/**
-	 * Diferente do histórico de localização, a ficha de saúde não é pública:
-	 * doença e tratamento são detalhe clínico, e o catálogo já mostra o resumo
-	 * que interessa a quem procura adotar.
+	 * Unlike the location history, the health record is not public: illness and
+	 * treatment are clinical detail, and the catalogue already shows the summary
+	 * that matters to someone looking to adopt.
 	 */
 	@Transactional(readOnly = true)
 	public List<PetHealthRecord> healthRecordsOf(Long petId, String actorEmail) {

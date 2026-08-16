@@ -6,12 +6,12 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 
 /**
- * Responde quem pode administrar um pet — editar, remover e decidir
- * candidaturas a ele.
+ * Answers who may manage a pet -- edit it, remove it and decide applications
+ * for it.
  *
- * <p>Mesmo motivo de {@link OrganizationAccess} existir: a pergunta é feita por
- * mais de um serviço, e uma regra de autorização duplicada não falha em voz
- * alta quando as cópias divergem — ela só passa a permitir o que deveria negar.
+ * <p>Same reason {@link OrganizationAccess} exists: the question is asked by
+ * more than one service, and a duplicated authorization rule does not fail
+ * loudly when the copies drift -- it just starts allowing what it should deny.
  */
 @Component
 public class PetAccess {
@@ -23,8 +23,8 @@ public class PetAccess {
 	}
 
 	/**
-	 * Pet de pessoa: só o dono. Pet de organização: qualquer membro dela,
-	 * incluindo STAFF — cuidar dos animais é justamente o trabalho do staff.
+	 * A person's pet: the owner only. An organization's pet: any member of it,
+	 * STAFF included -- caring for the animals is exactly the staff's job.
 	 */
 	public boolean canManage(Pet pet, User actor) {
 		return pet.isOwnedByOrganization()
@@ -34,7 +34,7 @@ public class PetAccess {
 
 	public void requireCanManage(Pet pet, User actor) {
 		if (!canManage(pet, actor)) {
-			throw new AccessDeniedException("Você não administra este pet");
+			throw new AccessDeniedException("You do not manage this pet");
 		}
 	}
 }

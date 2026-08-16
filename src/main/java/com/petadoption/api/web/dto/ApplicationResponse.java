@@ -12,7 +12,7 @@ public record ApplicationResponse(
 		String message,
 		PetSummary pet,
 		AdopterSummary adopter,
-		/** Compatibilidade no instante da candidatura, não recalculada depois. */
+		/** Compatibility at the moment of application, not recomputed later. */
 		Integer compatibilityScore,
 		boolean hasBlockingFactor,
 		OffsetDateTime createdAt,
