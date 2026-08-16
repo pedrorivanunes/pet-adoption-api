@@ -243,7 +243,7 @@
             "url": { "raw": "{{baseUrl}}/api/organizations", "host": ["{{baseUrl}}"], "path": ["api", "organizations"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Patas do Sul\",\n  \"description\": \"Protetores independentes da zona sul\",\n  \"email\": \"contato@patasdosul.example.com\",\n  \"phone\": \"5133331111\",\n  \"address\": \"Rua Exemplo, 45\"\n}"
+              "raw": "{\n  \"name\": \"Southside Paws\",\n  \"description\": \"Independent rescuers on the south side\",\n  \"email\": \"contact@southsidepaws.example.com\",\n  \"phone\": \"5133331111\",\n  \"address\": \"45 Example Street\"\n}"
             },
             "description": "The creator becomes ADMIN of the organization, in the same transaction."
           }
