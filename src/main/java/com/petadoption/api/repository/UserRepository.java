@@ -7,8 +7,8 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-	// O e-mail é normalizado para minúsculas na escrita, então a busca exata
-	// basta e continua usando o índice.
+	// Email is normalised to lower case on write, so an exact lookup is enough
+	// and still uses the index.
 	Optional<User> findByEmail(String email);
 
 	boolean existsByEmail(String email);

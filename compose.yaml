@@ -10,14 +10,14 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      # Postgres 18+ espera o volume na raiz de /var/lib/postgresql, e não em
-      # /var/lib/postgresql/data como nas versões anteriores: a imagem passou a
-      # guardar os dados numa subpasta por versão maior, o que é o que permite
-      # "pg_upgrade" no futuro. Montar no caminho antigo faz o container abortar.
+      # Postgres 18+ expects the volume at the root of /var/lib/postgresql, not
+      # at /var/lib/postgresql/data as in earlier versions: the image now keeps
+      # data in a per-major-version subfolder, which is what makes a future
+      # "pg_upgrade" possible. Mounting the old path makes the container abort.
       - pgdata:/var/lib/postgresql
     healthcheck:
-      # A API espera este healthcheck de verdade, não um "sleep" arbitrário:
-      # o Postgres aceita conexões só depois que o initdb termina.
+      # The API waits on this healthcheck for real, not on an arbitrary "sleep":
+      # Postgres only accepts connections once initdb has finished.
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-petuser} -d ${DB_NAME:-pet_adoption}"]
       interval: 5s
       timeout: 3s
@@ -30,15 +30,17 @@ services:
       db:
         condition: service_healthy
     environment:
-      # Sobe com a base de exemplo populada, para o projeto ser explorável
-      # imediatamente. Use SPRING_PROFILES_ACTIVE=default para uma base vazia.
+      # Comes up with the sample database populated, so the project is
+      # explorable immediately. Use SPRING_PROFILES_ACTIVE=default for an
+      # empty database.
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-demo}
       DB_URL: jdbc:postgresql://db:5432/${DB_NAME:-pet_adoption}
       DB_USERNAME: ${DB_USER:-petuser}
       DB_PASSWORD: ${DB_PASSWORD:-petpass}
-      # Valor de desenvolvimento. Em qualquer ambiente real, defina JWT_SECRET
-      # no ambiente: este default existe só para o compose subir sem cerimônia.
-      JWT_SECRET: ${JWT_SECRET:-desenvolvimento-local-troque-este-segredo-agora}
+      # A development value. In any real environment, set JWT_SECRET in the
+      # environment: this default exists only so compose comes up without
+      # ceremony.
+      JWT_SECRET: ${JWT_SECRET:-local-development-change-this-secret-now}
     ports:
       - "8080:8080"
     restart: on-failure

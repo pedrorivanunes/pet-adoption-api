@@ -5,13 +5,13 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-/** Vincula uma pessoa já cadastrada à organização. */
+/** Links an already-registered person to the organization. */
 public record MemberRequest(
 
-		@NotBlank(message = "e-mail é obrigatório")
-		@Email(message = "e-mail inválido")
+		@NotBlank(message = "email is required")
+		@Email(message = "email is not valid")
 		String email,
 
-		@NotNull(message = "papel é obrigatório (ADMIN ou STAFF)")
+		@NotNull(message = "role is required (ADMIN or STAFF)")
 		OrgMemberRole role) {
 }

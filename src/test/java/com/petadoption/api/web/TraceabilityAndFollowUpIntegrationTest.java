@@ -16,19 +16,19 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** Linha do tempo do animal e acompanhamento pós-adoção. */
+/** The animal's timeline and the post-adoption follow-up. */
 class TraceabilityAndFollowUpIntegrationTest extends AbstractIntegrationTest {
 
-	// ================================================ rastreabilidade ========
+	// =================================================== traceability ========
 
 	@Test
-	@DisplayName("registrar resgate aceita data anterior ao cadastro do pet")
+	@DisplayName("recording a rescue accepts a date before the pet was registered")
 	void rescuePredatesRegistration() throws Exception {
-		String tutor = tokenFor("resgatadora@example.com");
-		long petId = createPet(tutor, "Sobrevivente");
+		String guardian = tokenFor("resgatadora@example.com");
+		long petId = createPet(guardian, "Sobrevivente");
 
 		mockMvc.perform(post("/api/pets/" + petId + "/history")
-						.header("Authorization", bearer(tutor))
+						.header("Authorization", bearer(guardian))
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(body(Map.of("kind", "RESCUE", "location", "Avenida Ipiranga, Porto Alegre",
 								"startedOn", LocalDate.now().minusYears(2).toString()))))
@@ -39,13 +39,13 @@ class TraceabilityAndFollowUpIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("nova permanência encerra a anterior, sem buraco na linha do tempo")
+	@DisplayName("a new stay closes the previous one, with no gap in the timeline")
 	void newStayClosesThePrevious() throws Exception {
-		String tutor = tokenFor("linha-do-tempo@example.com");
-		long petId = createPet(tutor, "Viajante");
+		String guardian = tokenFor("linha-do-tempo@example.com");
+		long petId = createPet(guardian, "Viajante");
 
-		addStay(tutor, petId, "RESCUE", "Rua onde foi encontrado", LocalDate.now().minusMonths(6));
-		addStay(tutor, petId, "FOSTER", "Lar temporário", LocalDate.now().minusMonths(2));
+		addStay(guardian, petId, "RESCUE", "Rua onde foi encontrado", LocalDate.now().minusMonths(6));
+		addStay(guardian, petId, "FOSTER", "Foster home", LocalDate.now().minusMonths(2));
 
 		mockMvc.perform(get("/api/pets/" + petId + "/history"))
 				.andExpect(status().isOk())
@@ -58,14 +58,14 @@ class TraceabilityAndFollowUpIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("permanência que começa antes da atual é recusada")
+	@DisplayName("a stay starting before the current one is refused")
 	void staysCannotGoBackwards() throws Exception {
-		String tutor = tokenFor("ordem@example.com");
-		long petId = createPet(tutor, "Cronologia");
-		addStay(tutor, petId, "SHELTER", "Abrigo", LocalDate.now().minusMonths(1));
+		String guardian = tokenFor("ordem@example.com");
+		long petId = createPet(guardian, "Cronologia");
+		addStay(guardian, petId, "SHELTER", "Shelter", LocalDate.now().minusMonths(1));
 
 		mockMvc.perform(post("/api/pets/" + petId + "/history")
-						.header("Authorization", bearer(tutor))
+						.header("Authorization", bearer(guardian))
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(body(Map.of("kind", "FOSTER", "location", "Antes",
 								"startedOn", LocalDate.now().minusMonths(3).toString()))))
@@ -73,31 +73,31 @@ class TraceabilityAndFollowUpIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("histórico é público, mas só quem administra escreve nele")
+	@DisplayName("the history is public, but only a manager writes to it")
 	void historyIsPublicButWriteIsNot() throws Exception {
-		String tutor = tokenFor("dono-historico@example.com");
-		long petId = createPet(tutor, "Publico");
-		addStay(tutor, petId, "SHELTER", "Abrigo Municipal", LocalDate.now().minusDays(30));
+		String guardian = tokenFor("dono-historico@example.com");
+		long petId = createPet(guardian, "Publico");
+		addStay(guardian, petId, "SHELTER", "Municipal Shelter", LocalDate.now().minusDays(30));
 
 		mockMvc.perform(get("/api/pets/" + petId + "/history"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$[0].location").value("Abrigo Municipal"));
+				.andExpect(jsonPath("$[0].location").value("Municipal Shelter"));
 
-		String estranho = tokenFor("estranho-historico@example.com");
+		String stranger = tokenFor("stranger-historico@example.com");
 		mockMvc.perform(post("/api/pets/" + petId + "/history")
-						.header("Authorization", bearer(estranho))
+						.header("Authorization", bearer(stranger))
 						.contentType(MediaType.APPLICATION_JSON)
-						.content(body(Map.of("kind", "OTHER", "location", "Invenção",
+						.content(body(Map.of("kind", "OTHER", "location", "Made up",
 								"startedOn", LocalDate.now().toString()))))
 				.andExpect(status().isForbidden());
 	}
 
 	@Test
-	@DisplayName("histórico público não revela a identidade de tutores pessoas físicas")
+	@DisplayName("the public history does not reveal the identity of individual guardians")
 	void individualCustodiansAreNotIdentified() throws Exception {
-		String tutor = tokenFor("anonima@example.com");
-		long petId = createPet(tutor, "Discreto");
-		addStay(tutor, petId, "FOSTER", "Casa da voluntária", LocalDate.now().minusDays(10));
+		String guardian = tokenFor("anonima@example.com");
+		long petId = createPet(guardian, "Discreto");
+		addStay(guardian, petId, "FOSTER", "A volunteer's home", LocalDate.now().minusDays(10));
 
 		mockMvc.perform(get("/api/pets/" + petId + "/history"))
 				.andExpect(status().isOk())
@@ -105,16 +105,16 @@ class TraceabilityAndFollowUpIntegrationTest extends AbstractIntegrationTest {
 				.andExpect(jsonPath("$[0].custodian.name").doesNotExist());
 	}
 
-	// ======================================================== saúde ==========
+	// ======================================================= health ==========
 
 	@Test
-	@DisplayName("ficha de saúde é restrita a quem administra o animal")
+	@DisplayName("the health record is restricted to whoever manages the animal")
 	void healthRecordsAreRestricted() throws Exception {
-		String tutor = tokenFor("dono-saude@example.com");
-		long petId = createPet(tutor, "Paciente");
+		String guardian = tokenFor("owner-health@example.com");
+		long petId = createPet(guardian, "Paciente");
 
 		mockMvc.perform(post("/api/pets/" + petId + "/health-records")
-						.header("Authorization", bearer(tutor))
+						.header("Authorization", bearer(guardian))
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(body(Map.of("kind", "VACCINATION",
 								"occurredOn", LocalDate.now().minusDays(5).toString(),
@@ -122,40 +122,40 @@ class TraceabilityAndFollowUpIntegrationTest extends AbstractIntegrationTest {
 				.andExpect(status().isCreated());
 
 		mockMvc.perform(get("/api/pets/" + petId + "/health-records")
-						.header("Authorization", bearer(tutor)))
+						.header("Authorization", bearer(guardian)))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$[0].kind").value("VACCINATION"));
 
 		mockMvc.perform(get("/api/pets/" + petId + "/health-records"))
 				.andExpect(status().isUnauthorized());
 
-		String estranho = tokenFor("estranho-saude@example.com");
+		String stranger = tokenFor("stranger-health@example.com");
 		mockMvc.perform(get("/api/pets/" + petId + "/health-records")
-						.header("Authorization", bearer(estranho)))
+						.header("Authorization", bearer(stranger)))
 				.andExpect(status().isForbidden());
 	}
 
-	// ==================================================== pós-adoção =========
+	// ================================================== post-adoption ========
 
 	@Test
-	@DisplayName("aprovar transfere a tutoria e abre a permanência no lar adotivo")
+	@DisplayName("approving transfers guardianship and opens the stay in the adoptive home")
 	void approvalTransfersCustody() throws Exception {
-		String abrigo = tokenFor("abrigo-transfere@example.com");
-		long petId = createPet(abrigo, "Transferido");
-		addStay(abrigo, petId, "SHELTER", "Abrigo de origem", LocalDate.now().minusMonths(3));
+		String shelter = tokenFor("shelter-transfer@example.com");
+		long petId = createPet(shelter, "Transferido");
+		addStay(shelter, petId, "SHELTER", "Origin shelter", LocalDate.now().minusMonths(3));
 
-		String adotante = tokenFor("nova-tutora@example.com");
-		saveAdopterProfile(adotante);
-		approveAdoptionOf(petId, abrigo, adotante);
+		String adopter = tokenFor("nova-tutora@example.com");
+		saveAdopterProfile(adopter);
+		approveAdoptionOf(petId, shelter, adopter);
 
-		// a tutoria passou para quem adotou
+		// guardianship passed to whoever adopted
 		mockMvc.perform(get("/api/pets/" + petId))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.status").value("ADOPTED"))
 				.andExpect(jsonPath("$.owner.type").value("USER"))
 				.andExpect(jsonPath("$.owner.name").value("nova-tutora"));
 
-		// e a linha do tempo registrou a mudança sozinha
+		// and the timeline recorded the change on its own
 		mockMvc.perform(get("/api/pets/" + petId + "/history"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.length()").value(2))
@@ -166,41 +166,41 @@ class TraceabilityAndFollowUpIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("quem entregou o animal registra o acompanhamento; o adotante não")
+	@DisplayName("whoever handed the animal over logs the follow-up; the adopter does not")
 	void onlyOriginRecordsFollowUp() throws Exception {
-		String abrigo = tokenFor("abrigo-acompanha@example.com");
-		long petId = createPet(abrigo, "Acompanhado");
-		String adotante = tokenFor("adotante-acompanhado@example.com");
-		saveAdopterProfile(adotante);
-		approveAdoptionOf(petId, abrigo, adotante);
+		String shelter = tokenFor("shelter-followup@example.com");
+		long petId = createPet(shelter, "Acompanhado");
+		String adopter = tokenFor("adopter-followed@example.com");
+		saveAdopterProfile(adopter);
+		approveAdoptionOf(petId, shelter, adopter);
 
 		mockMvc.perform(post("/api/pets/" + petId + "/followups")
-						.header("Authorization", bearer(abrigo))
+						.header("Authorization", bearer(shelter))
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(body(Map.of("kind", "VISIT", "occurredOn", LocalDate.now().toString(),
 								"notes", "Animal bem adaptado"))))
 				.andExpect(status().isCreated())
 				.andExpect(jsonPath("$.kind").value("VISIT"));
 
-		// o adotante não atesta o próprio acompanhamento
+		// the adopter does not certify their own follow-up
 		mockMvc.perform(post("/api/pets/" + petId + "/followups")
-						.header("Authorization", bearer(adotante))
+						.header("Authorization", bearer(adopter))
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(body(Map.of("kind", "VISIT", "occurredOn", LocalDate.now().toString()))))
 				.andExpect(status().isForbidden());
 	}
 
 	@Test
-	@DisplayName("contato anterior à adoção é recusado")
+	@DisplayName("a contact predating the adoption is refused")
 	void followUpCannotPredateAdoption() throws Exception {
-		String abrigo = tokenFor("abrigo-data@example.com");
-		long petId = createPet(abrigo, "Datado");
-		String adotante = tokenFor("adotante-data@example.com");
-		saveAdopterProfile(adotante);
-		approveAdoptionOf(petId, abrigo, adotante);
+		String shelter = tokenFor("shelter-date@example.com");
+		long petId = createPet(shelter, "Dated");
+		String adopter = tokenFor("adopter-date@example.com");
+		saveAdopterProfile(adopter);
+		approveAdoptionOf(petId, shelter, adopter);
 
 		mockMvc.perform(post("/api/pets/" + petId + "/followups")
-						.header("Authorization", bearer(abrigo))
+						.header("Authorization", bearer(shelter))
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(body(Map.of("kind", "CALL",
 								"occurredOn", LocalDate.now().minusDays(10).toString()))))
@@ -208,17 +208,17 @@ class TraceabilityAndFollowUpIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("relatório mostra a janela de seis meses e os meses sem contato")
+	@DisplayName("the report shows the six-month window and the months without contact")
 	void reportShowsWindowAndGaps() throws Exception {
-		String abrigo = tokenFor("abrigo-relatorio@example.com");
-		long petId = createPet(abrigo, "Relatado");
-		String adotante = tokenFor("adotante-relatorio@example.com");
-		saveAdopterProfile(adotante);
-		approveAdoptionOf(petId, abrigo, adotante);
+		String shelter = tokenFor("shelter-report@example.com");
+		long petId = createPet(shelter, "Reported");
+		String adopter = tokenFor("adopter-report@example.com");
+		saveAdopterProfile(adopter);
+		approveAdoptionOf(petId, shelter, adopter);
 
-		// sem nenhum contato, o mês corrente já aparece como lacuna
+		// with no contact at all, the current month already shows as a gap
 		mockMvc.perform(get("/api/pets/" + petId + "/followup-report")
-						.header("Authorization", bearer(abrigo)))
+						.header("Authorization", bearer(shelter)))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.window.minimumMonths").value(6))
 				.andExpect(jsonPath("$.window.endsOn").value(LocalDate.now().plusMonths(6).toString()))
@@ -228,50 +228,50 @@ class TraceabilityAndFollowUpIntegrationTest extends AbstractIntegrationTest {
 						.value(YearMonth.now().toString()));
 
 		mockMvc.perform(post("/api/pets/" + petId + "/followups")
-						.header("Authorization", bearer(abrigo))
+						.header("Authorization", bearer(shelter))
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(body(Map.of("kind", "VISIT", "occurredOn", LocalDate.now().toString()))))
 				.andExpect(status().isCreated());
 
 		mockMvc.perform(get("/api/pets/" + petId + "/followup-report")
-						.header("Authorization", bearer(abrigo)))
+						.header("Authorization", bearer(shelter)))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.summary.interactionCount").value(1))
 				.andExpect(jsonPath("$.summary.monthsWithoutContact.length()").value(0));
 	}
 
 	@Test
-	@DisplayName("relatório é visível ao adotante e fechado a terceiros")
+	@DisplayName("the report is visible to the adopter and closed to third parties")
 	void reportVisibility() throws Exception {
-		String abrigo = tokenFor("abrigo-visibilidade@example.com");
-		long petId = createPet(abrigo, "Reservado");
-		String adotante = tokenFor("adotante-visibilidade@example.com");
-		saveAdopterProfile(adotante);
-		approveAdoptionOf(petId, abrigo, adotante);
+		String shelter = tokenFor("shelter-visibility@example.com");
+		long petId = createPet(shelter, "Reserved");
+		String adopter = tokenFor("adopter-visibility@example.com");
+		saveAdopterProfile(adopter);
+		approveAdoptionOf(petId, shelter, adopter);
 
 		mockMvc.perform(get("/api/pets/" + petId + "/followup-report")
-						.header("Authorization", bearer(adotante)))
+						.header("Authorization", bearer(adopter)))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.adopter.email").value("adotante-visibilidade@example.com"));
+				.andExpect(jsonPath("$.adopter.email").value("adopter-visibility@example.com"));
 
-		String estranho = tokenFor("curioso-relatorio@example.com");
+		String stranger = tokenFor("nosy-report@example.com");
 		mockMvc.perform(get("/api/pets/" + petId + "/followup-report")
-						.header("Authorization", bearer(estranho)))
+						.header("Authorization", bearer(stranger)))
 				.andExpect(status().isForbidden());
 	}
 
 	@Test
-	@DisplayName("pet sem adoção não tem acompanhamento")
+	@DisplayName("a pet with no adoption has no follow-up")
 	void noAdoptionMeansNoFollowUp() throws Exception {
-		String tutor = tokenFor("sem-adocao@example.com");
-		long petId = createPet(tutor, "Disponivel");
+		String guardian = tokenFor("no-adoption@example.com");
+		long petId = createPet(guardian, "Disponivel");
 
 		mockMvc.perform(get("/api/pets/" + petId + "/followup-report")
-						.header("Authorization", bearer(tutor)))
+						.header("Authorization", bearer(guardian)))
 				.andExpect(status().isNotFound());
 	}
 
-	// ----------------------------------------------------------------- apoio --
+	// --------------------------------------------------------------- helpers --
 
 	private void addStay(String token, long petId, String kind, String location, LocalDate startedOn)
 			throws Exception {
@@ -288,7 +288,7 @@ class TraceabilityAndFollowUpIntegrationTest extends AbstractIntegrationTest {
 				.andExpect(status().isCreated());
 	}
 
-	/** Candidata o adotante e aprova, deixando a adoção registrada. */
+	/** Applies as the adopter and approves, leaving the adoption on record. */
 	private void approveAdoptionOf(long petId, String ownerToken, String adopterToken) throws Exception {
 		String created = mockMvc.perform(post("/api/adoptions/applications")
 						.header("Authorization", bearer(adopterToken))

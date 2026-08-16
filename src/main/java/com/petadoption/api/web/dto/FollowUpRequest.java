@@ -10,14 +10,14 @@ import java.time.LocalDate;
 
 public record FollowUpRequest(
 
-		@NotNull(message = "tipo é obrigatório (VISIT, CALL, MESSAGE ou OTHER)")
+		@NotNull(message = "kind is required (VISIT, CALL, MESSAGE or OTHER)")
 		FollowUpKind kind,
 
-		@NotNull(message = "data é obrigatória")
-		@PastOrPresent(message = "o contato não pode estar no futuro")
+		@NotNull(message = "date is required")
+		@PastOrPresent(message = "the contact cannot be in the future")
 		LocalDate occurredOn,
 
-		@Size(max = 1000, message = "observações devem ter no máximo 1000 caracteres")
+		@Size(max = 1000, message = "notes must be at most 1000 characters")
 		String notes) {
 
 	public FollowUpService.FollowUpData toData() {

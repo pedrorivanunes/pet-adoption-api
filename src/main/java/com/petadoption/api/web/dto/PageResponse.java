@@ -6,11 +6,12 @@ import java.util.List;
 import java.util.function.Function;
 
 /**
- * Envelope de paginação próprio.
+ * Our own pagination envelope.
  *
- * <p>Serializar {@code Page} direto expõe a estrutura interna do Spring Data
- * como se fosse contrato da API — e ela já mudou entre versões. Um record
- * explícito é o contrato, e ele só muda quando nós decidirmos.
+ * <p>Serialising {@code Page} directly would expose Spring Data's internal
+ * structure as if it were the API contract -- and that structure has changed
+ * between versions. An explicit record is the contract, and it changes only when
+ * we decide it does.
  */
 public record PageResponse<T>(
 		List<T> content,

@@ -11,15 +11,15 @@ import java.time.LocalDate;
 
 public record HealthRecordRequest(
 
-		@NotNull(message = "tipo é obrigatório (ex.: VACCINATION, NEUTERING)")
+		@NotNull(message = "kind is required (e.g. VACCINATION, NEUTERING)")
 		HealthRecordKind kind,
 
-		@NotNull(message = "data é obrigatória")
-		@PastOrPresent(message = "um evento de saúde não acontece no futuro")
+		@NotNull(message = "date is required")
+		@PastOrPresent(message = "a health event does not happen in the future")
 		LocalDate occurredOn,
 
-		@NotBlank(message = "descrição é obrigatória")
-		@Size(max = 1000, message = "descrição deve ter no máximo 1000 caracteres")
+		@NotBlank(message = "description is required")
+		@Size(max = 1000, message = "description must be at most 1000 characters")
 		String description) {
 
 	public PetHistoryService.HealthData toData() {

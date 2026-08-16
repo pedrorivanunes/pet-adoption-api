@@ -17,7 +17,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.OffsetDateTime;
 
-/** Candidatura de uma pessoa a adotar um pet. */
+/** One person's application to adopt a pet. */
 @Entity
 @Table(name = "adoption_applications")
 @Getter
@@ -40,13 +40,13 @@ public class AdoptionApplication {
 	@Column(nullable = false)
 	private ApplicationStatus status = ApplicationStatus.PENDING;
 
-	/** Texto do candidato: por que quer adotar, como é a casa, etc. */
+	/** The applicant's own words: why they want to adopt, what home they offer. */
 	private String message;
 
 	/**
-	 * Compatibilidade calculada no instante da candidatura. É um retrato, não
-	 * um valor vivo: mudanças posteriores no perfil ou no pet não reescrevem o
-	 * que embasou a decisão.
+	 * Compatibility as computed at the moment of application. It is a snapshot,
+	 * not a live value: later changes to the profile or the pet do not rewrite
+	 * what the decision was based on.
 	 */
 	@Column(name = "compatibility_score")
 	private Integer compatibilityScore;
@@ -69,9 +69,10 @@ public class AdoptionApplication {
 	private String decisionNote;
 
 	/**
-	 * Registra a decisão como um movimento só: status, quem decidiu e quando.
-	 * O banco exige essa consistência por CHECK, e concentrar aqui evita que
-	 * algum caminho novo atualize o status e esqueça o resto.
+	 * Records the decision in a single move: status, who decided and when. The
+	 * database enforces that consistency with a CHECK, and keeping it in one
+	 * place stops a new code path from updating the status and forgetting the
+	 * rest.
 	 */
 	public void decide(ApplicationStatus outcome, User decidedBy, String note) {
 		this.status = outcome;

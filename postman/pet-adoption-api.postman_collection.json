@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "pet-adoption-api",
-    "description": "Coleção completa da API de adoção de pets.\n\nSuba a stack com `docker compose up --build` — o perfil `demo` popula a base com um cenário pronto.\n\nComece por **Autenticação → Login**: o token é salvo automaticamente na variável da coleção e usado por todas as demais requisições. Contas de exemplo (senha `senha-de-demonstracao`):\n\n- `ana@exemplo.br` — ADMIN do Abrigo Quatro Patas\n- `bruno@exemplo.br` — STAFF do abrigo\n- `carla@exemplo.br` — adotante com candidatura pendente\n- `diego@exemplo.br` — adotante que já concluiu uma adoção\n- `elisa@exemplo.br` — tutora particular",
+    "description": "The complete pet adoption API collection.\n\nBring the stack up with `docker compose up --build` -- the `demo` profile fills the database with a ready-made scenario.\n\nStart at **Authentication -> Login**: the token is saved automatically into a collection variable and used by every other request. Sample accounts (password `demo-password`):\n\n- `ana@example.com` -- ADMIN of Four Paws Shelter\n- `bruno@example.com` -- STAFF at the shelter\n- `carla@example.com` -- adopter with a pending application\n- `diego@example.com` -- adopter who already completed an adoption\n- `elisa@example.com` -- private guardian",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -11,8 +11,8 @@
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:8080" },
     { "key": "token", "value": "" },
-    { "key": "email", "value": "ana@exemplo.br" },
-    { "key": "password", "value": "senha-de-demonstracao" },
+    { "key": "email", "value": "ana@example.com" },
+    { "key": "password", "value": "demo-password" },
     { "key": "petId", "value": "1" },
     { "key": "organizationId", "value": "1" },
     { "key": "applicationId", "value": "1" },
@@ -20,19 +20,19 @@
   ],
   "item": [
     {
-      "name": "Autenticação",
+      "name": "Authentication",
       "item": [
         {
-          "name": "Cadastro",
+          "name": "Register",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "auth", "register"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Pessoa Nova\",\n  \"email\": \"nova@exemplo.br\",\n  \"password\": \"senha-super-secreta\",\n  \"phone\": \"51999998888\"\n}"
+              "raw": "{\n  \"name\": \"Pessoa Nova\",\n  \"email\": \"nova@example.com\",\n  \"password\": \"a-very-secret-password\",\n  \"phone\": \"51999998888\"\n}"
             },
-            "description": "Cria uma conta. Devolve 409 se o e-mail já existir, ignorando maiúsculas."
+            "description": "Creates an account. Returns 409 if the email already exists, ignoring case."
           }
         },
         {
@@ -60,29 +60,29 @@
               "mode": "raw",
               "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
             },
-            "description": "Autentica e guarda o token na variável `token` da coleção. Troque a variável `email` para operar como outra pessoa."
+            "description": "Authenticates and stores the token in the collection `token` variable. Change the `email` variable to act as someone else."
           }
         },
         {
-          "name": "Login com senha errada (401)",
+          "name": "Login with wrong password (401)",
           "request": {
             "auth": { "type": "noauth" },
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] },
             "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"errada\"\n}" },
-            "description": "Devolve 401 em ProblemDetail, com a mesma mensagem que um e-mail inexistente — não revela quais contas existem."
+            "description": "Returns 401 as a ProblemDetail, with the same message a non-existent email gets -- it does not reveal which accounts exist."
           }
         },
         {
-          "name": "Meus dados",
+          "name": "My details",
           "request": {
             "method": "GET",
             "url": { "raw": "{{baseUrl}}/api/users/me", "host": ["{{baseUrl}}"], "path": ["api", "users", "me"] }
           }
         },
         {
-          "name": "Meus pets",
+          "name": "My pets",
           "request": {
             "method": "GET",
             "url": { "raw": "{{baseUrl}}/api/users/me/pets", "host": ["{{baseUrl}}"], "path": ["api", "users", "me", "pets"] }
@@ -91,10 +91,10 @@
       ]
     },
     {
-      "name": "Catálogo (público)",
+      "name": "Catalogue (public)",
       "item": [
         {
-          "name": "Listar pets disponíveis",
+          "name": "List available pets",
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
@@ -109,11 +109,11 @@
                 { "key": "size", "value": "20" }
               ]
             },
-            "description": "Público. Sem o parâmetro `status`, lista os disponíveis para adoção."
+            "description": "Public. Without the `status` parameter, it lists those available for adoption."
           }
         },
         {
-          "name": "Detalhe do pet",
+          "name": "Pet detail",
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
@@ -121,16 +121,16 @@
           }
         },
         {
-          "name": "Histórico de rastreabilidade",
+          "name": "Traceability history",
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
             "url": { "raw": "{{baseUrl}}/api/pets/{{petId}}/history", "host": ["{{baseUrl}}"], "path": ["api", "pets", "{{petId}}", "history"] },
-            "description": "Público. Tutores pessoas físicas não são identificados; organizações aparecem pelo nome."
+            "description": "Public. Individual guardians are not identified; organizations appear by name."
           }
         },
         {
-          "name": "Listar organizações",
+          "name": "List organizations",
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
@@ -138,7 +138,7 @@
           }
         },
         {
-          "name": "Pets de uma organização",
+          "name": "Pets of an organization",
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
@@ -148,10 +148,10 @@
       ]
     },
     {
-      "name": "Pets (gestão)",
+      "name": "Pets (management)",
       "item": [
         {
-          "name": "Cadastrar pet próprio",
+          "name": "Register own pet",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -160,24 +160,24 @@
               "mode": "raw",
               "raw": "{\n  \"name\": \"Pipoca\",\n  \"species\": \"dog\",\n  \"breed\": \"Vira-lata\",\n  \"sex\": \"FEMALE\",\n  \"size\": \"SMALL\",\n  \"birthDate\": \"2022-03-10\",\n  \"birthDateEstimated\": true,\n  \"goodWithOtherAnimals\": true,\n  \"healthNotes\": \"Vacinada e vermifugada\"\n}"
             },
-            "description": "Sem `ownerOrganizationId`, o dono é quem está autenticado."
+            "description": "Without `ownerOrganizationId`, the owner is the authenticated person."
           }
         },
         {
-          "name": "Cadastrar pet para a organização",
+          "name": "Register pet for the organization",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": { "raw": "{{baseUrl}}/api/pets", "host": ["{{baseUrl}}"], "path": ["api", "pets"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Fumaça\",\n  \"species\": \"cat\",\n  \"sex\": \"MALE\",\n  \"size\": \"MEDIUM\",\n  \"hasSpecialNeeds\": true,\n  \"requiresConstantCare\": true,\n  \"goodWithOtherAnimals\": false,\n  \"ownerOrganizationId\": {{organizationId}}\n}"
+              "raw": "{\n  \"name\": \"Smoky\",\n  \"species\": \"cat\",\n  \"sex\": \"MALE\",\n  \"size\": \"MEDIUM\",\n  \"hasSpecialNeeds\": true,\n  \"requiresConstantCare\": true,\n  \"goodWithOtherAnimals\": false,\n  \"ownerOrganizationId\": {{organizationId}}\n}"
             },
-            "description": "Exige vínculo com a organização — 403 caso contrário."
+            "description": "Requires membership of the organization -- 403 otherwise."
           }
         },
         {
-          "name": "Atualizar pet",
+          "name": "Update pet",
           "request": {
             "method": "PUT",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -186,98 +186,98 @@
               "mode": "raw",
               "raw": "{\n  \"name\": \"Luna\",\n  \"species\": \"dog\",\n  \"breed\": \"Vira-lata\",\n  \"sex\": \"FEMALE\",\n  \"size\": \"MEDIUM\",\n  \"status\": \"AVAILABLE\",\n  \"goodWithOtherAnimals\": true\n}"
             },
-            "description": "Dono ou membro da organização dona. O dono não muda por aqui."
+            "description": "The owner, or a member of the owning organization. Ownership does not change here."
           }
         },
         {
-          "name": "Remover pet",
+          "name": "Remove pet",
           "request": {
             "method": "DELETE",
             "url": { "raw": "{{baseUrl}}/api/pets/{{petId}}", "host": ["{{baseUrl}}"], "path": ["api", "pets", "{{petId}}"] },
-            "description": "409 se o pet já tem adoção registrada — o histórico depende dele."
+            "description": "409 if the pet already has an adoption on record -- the history depends on it."
           }
         },
         {
-          "name": "Registrar permanência no histórico",
+          "name": "Record stay in the history",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": { "raw": "{{baseUrl}}/api/pets/{{petId}}/history", "host": ["{{baseUrl}}"], "path": ["api", "pets", "{{petId}}", "history"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"kind\": \"FOSTER\",\n  \"location\": \"Lar temporário — bairro Cidade Baixa\",\n  \"startedOn\": \"2025-11-01\",\n  \"notes\": \"Acolhido por voluntária até abrir vaga\"\n}"
+              "raw": "{\n  \"kind\": \"FOSTER\",\n  \"location\": \"Foster home -- Cidade Baixa district\",\n  \"startedOn\": \"2025-11-01\",\n  \"notes\": \"Taken in by a volunteer until a place opened up\"\n}"
             },
-            "description": "Encerra automaticamente a permanência anterior na data de início desta."
+            "description": "Automatically closes the previous stay on this one's start date."
           }
         },
         {
-          "name": "Ficha de saúde",
+          "name": "Health record",
           "request": {
             "method": "GET",
             "url": { "raw": "{{baseUrl}}/api/pets/{{petId}}/health-records", "host": ["{{baseUrl}}"], "path": ["api", "pets", "{{petId}}", "health-records"] },
-            "description": "Restrito a quem administra o animal — não é público."
+            "description": "Restricted to whoever manages the animal -- it is not public."
           }
         },
         {
-          "name": "Registrar evento de saúde",
+          "name": "Log health event",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": { "raw": "{{baseUrl}}/api/pets/{{petId}}/health-records", "host": ["{{baseUrl}}"], "path": ["api", "pets", "{{petId}}", "health-records"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"kind\": \"VACCINATION\",\n  \"occurredOn\": \"2026-06-01\",\n  \"description\": \"Antirrábica, dose anual\"\n}"
+              "raw": "{\n  \"kind\": \"VACCINATION\",\n  \"occurredOn\": \"2026-06-01\",\n  \"description\": \"Rabies, annual dose\"\n}"
             }
           }
         }
       ]
     },
     {
-      "name": "Organizações",
+      "name": "Organizations",
       "item": [
         {
-          "name": "Criar organização",
+          "name": "Create organization",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": { "raw": "{{baseUrl}}/api/organizations", "host": ["{{baseUrl}}"], "path": ["api", "organizations"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Patas do Sul\",\n  \"description\": \"Protetores independentes da zona sul\",\n  \"email\": \"contato@patasdosul.exemplo.br\",\n  \"phone\": \"5133331111\",\n  \"address\": \"Rua Exemplo, 45\"\n}"
+              "raw": "{\n  \"name\": \"Southside Paws\",\n  \"description\": \"Independent rescuers on the south side\",\n  \"email\": \"contact@southsidepaws.example.com\",\n  \"phone\": \"5133331111\",\n  \"address\": \"45 Example Street\"\n}"
             },
-            "description": "Quem cria vira ADMIN da organização, na mesma transação."
+            "description": "The creator becomes ADMIN of the organization, in the same transaction."
           }
         },
         {
-          "name": "Membros da organização",
+          "name": "Organization members",
           "request": {
             "method": "GET",
             "url": { "raw": "{{baseUrl}}/api/organizations/{{organizationId}}/members", "host": ["{{baseUrl}}"], "path": ["api", "organizations", "{{organizationId}}", "members"] },
-            "description": "Visível a quem tem vínculo. 403 para forasteiros."
+            "description": "Visible to members. 403 for outsiders."
           }
         },
         {
-          "name": "Adicionar membro",
+          "name": "Add member",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": { "raw": "{{baseUrl}}/api/organizations/{{organizationId}}/members", "host": ["{{baseUrl}}"], "path": ["api", "organizations", "{{organizationId}}", "members"] },
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"elisa@exemplo.br\",\n  \"role\": \"STAFF\"\n}" },
-            "description": "Só ADMIN. 409 se a pessoa já tem vínculo."
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"elisa@example.com\",\n  \"role\": \"STAFF\"\n}" },
+            "description": "ADMIN only. 409 if the person is already a member."
           }
         },
         {
-          "name": "Trocar papel de membro",
+          "name": "Change member role",
           "request": {
             "method": "PUT",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": { "raw": "{{baseUrl}}/api/organizations/{{organizationId}}/members/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api", "organizations", "{{organizationId}}", "members", "{{userId}}"] },
             "body": { "mode": "raw", "raw": "{\n  \"role\": \"ADMIN\"\n}" },
-            "description": "409 ao rebaixar o último ADMIN — a organização não pode ficar acéfala."
+            "description": "409 when demoting the last ADMIN -- the organization cannot be left headless."
           }
         },
         {
-          "name": "Remover membro",
+          "name": "Remove member",
           "request": {
             "method": "DELETE",
             "url": { "raw": "{{baseUrl}}/api/organizations/{{organizationId}}/members/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api", "organizations", "{{organizationId}}", "members", "{{userId}}"] }
@@ -286,10 +286,10 @@
       ]
     },
     {
-      "name": "Adoção",
+      "name": "Adoption",
       "item": [
         {
-          "name": "Salvar perfil de adotante",
+          "name": "Save adopter profile",
           "request": {
             "method": "PUT",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -298,19 +298,19 @@
               "mode": "raw",
               "raw": "{\n  \"housingType\": \"HOUSE\",\n  \"hasChildren\": false,\n  \"residentsCount\": 2,\n  \"hasOtherPets\": false,\n  \"hasTimeAvailability\": true,\n  \"preferredSpecies\": \"dog\",\n  \"preferredSize\": \"MEDIUM\",\n  \"preferredSex\": \"FEMALE\",\n  \"acceptsSpecialNeeds\": false,\n  \"acceptsContinuousTreatment\": false,\n  \"acceptsChronicDisease\": false\n}"
             },
-            "description": "Idempotente: cria na primeira chamada, atualiza nas seguintes."
+            "description": "Idempotent: creates on the first call, updates on the ones after."
           }
         },
         {
-          "name": "Quero adotar (ranqueado)",
+          "name": "I want to adopt (ranked)",
           "request": {
             "method": "GET",
             "url": { "raw": "{{baseUrl}}/api/adoptions/matches", "host": ["{{baseUrl}}"], "path": ["api", "adoptions", "matches"] },
-            "description": "Pets disponíveis ordenados por compatibilidade, com a decomposição do score. Animais com fator impeditivo não aparecem. Entre como `carla@exemplo.br` para ver o ranking em ação."
+            "description": "Available pets ordered by compatibility, with the score broken down. Animals with a blocker do not appear. Log in as `carla@example.com` to see the ranking in action."
           }
         },
         {
-          "name": "Candidatar-se",
+          "name": "Apply",
           "event": [
             {
               "listen": "test",
@@ -328,79 +328,79 @@
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": { "raw": "{{baseUrl}}/api/adoptions/applications", "host": ["{{baseUrl}}"], "path": ["api", "adoptions", "applications"] },
-            "body": { "mode": "raw", "raw": "{\n  \"petId\": {{petId}},\n  \"message\": \"Tenho pátio cercado e trabalho de casa.\"\n}" },
-            "description": "409 se: não há perfil de adotante, já existe candidatura pendente, o pet não está disponível, ou você mesmo cuida dele."
+            "body": { "mode": "raw", "raw": "{\n  \"petId\": {{petId}},\n  \"message\": \"I have a fenced yard and I work from home.\"\n}" },
+            "description": "409 when: there is no adopter profile, an application is already pending, the pet is not available, or you manage it yourself."
           }
         },
         {
-          "name": "Minhas candidaturas",
+          "name": "My applications",
           "request": {
             "method": "GET",
             "url": { "raw": "{{baseUrl}}/api/adoptions/applications/me", "host": ["{{baseUrl}}"], "path": ["api", "adoptions", "applications", "me"] }
           }
         },
         {
-          "name": "Relatório de compatibilidade do pet",
+          "name": "Pet compatibility report",
           "request": {
             "method": "GET",
             "url": { "raw": "{{baseUrl}}/api/pets/{{petId}}/applications", "host": ["{{baseUrl}}"], "path": ["api", "pets", "{{petId}}", "applications"] },
-            "description": "Candidaturas ranqueadas por afinidade. Só para quem administra o animal."
+            "description": "Applications ranked by affinity. Only for whoever manages the animal."
           }
         },
         {
-          "name": "Aprovar candidatura",
+          "name": "Approve application",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": { "raw": "{{baseUrl}}/api/adoptions/applications/{{applicationId}}/approve", "host": ["{{baseUrl}}"], "path": ["api", "adoptions", "applications", "{{applicationId}}", "approve"] },
             "body": { "mode": "raw", "raw": "{\n  \"note\": \"Perfil combina bem.\"\n}" },
-            "description": "Numa transação: decide a candidatura, transfere a tutoria, registra a adoção, abre a permanência no lar adotivo e recusa os demais candidatos."
+            "description": "In one transaction: decides the application, transfers guardianship, records the adoption, opens the stay in the adoptive home and rejects the other applicants."
           }
         },
         {
-          "name": "Recusar candidatura",
+          "name": "Reject application",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": { "raw": "{{baseUrl}}/api/adoptions/applications/{{applicationId}}/reject", "host": ["{{baseUrl}}"], "path": ["api", "adoptions", "applications", "{{applicationId}}", "reject"] },
-            "body": { "mode": "raw", "raw": "{\n  \"note\": \"Já temos outro candidato em conversa avançada.\"\n}" }
+            "body": { "mode": "raw", "raw": "{\n  \"note\": \"We already have another applicant in advanced discussion.\"\n}" }
           }
         },
         {
-          "name": "Desistir da candidatura",
+          "name": "Withdraw application",
           "request": {
             "method": "POST",
             "url": { "raw": "{{baseUrl}}/api/adoptions/applications/{{applicationId}}/cancel", "host": ["{{baseUrl}}"], "path": ["api", "adoptions", "applications", "{{applicationId}}", "cancel"] },
-            "description": "Direito exclusivo de quem se candidatou. Libera a vaga para outra candidatura."
+            "description": "The applicant's exclusive right. Frees the slot for another application."
           }
         }
       ]
     },
     {
-      "name": "Pós-adoção",
+      "name": "Post-adoption",
       "item": [
         {
-          "name": "Registrar contato de acompanhamento",
+          "name": "Log follow-up contact",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": { "raw": "{{baseUrl}}/api/pets/{{petId}}/followups", "host": ["{{baseUrl}}"], "path": ["api", "pets", "{{petId}}", "followups"] },
             "body": { "mode": "raw", "raw": "{\n  \"kind\": \"VISIT\",\n  \"occurredOn\": \"2026-08-01\",\n  \"notes\": \"Animal bem adaptado, ganhou peso.\"\n}" },
-            "description": "De quem entregou o animal, nunca de quem o recebeu. Use `ana@exemplo.br` com o pet Bidu."
+            "description": "Belongs to whoever handed the animal over, never to whoever received it. Use `ana@example.com` with the pet Bidu."
           }
         },
         {
-          "name": "Relatório de acompanhamento",
+          "name": "Follow-up report",
           "request": {
             "method": "GET",
             "url": { "raw": "{{baseUrl}}/api/pets/{{petId}}/followup-report", "host": ["{{baseUrl}}"], "path": ["api", "pets", "{{petId}}", "followup-report"] },
-            "description": "Janela de 6 meses, contatos, eventos de saúde no período e os meses já decorridos sem contato. Visível a quem entregou e a quem adotou."
+            "description": "The 6-month window, the contacts, the health events in the period, and the elapsed months without contact. Visible to whoever handed over and whoever adopted."
           }
         }
       ]
     },
     {
-      "name": "Saúde da aplicação",
+      "name": "Application health",
       "item": [
         {
           "name": "Health check",

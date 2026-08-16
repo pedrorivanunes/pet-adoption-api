@@ -19,8 +19,8 @@ public interface AdoptionApplicationRepository extends JpaRepository<AdoptionApp
 	@EntityGraph(attributePaths = { "pet", "adopter" })
 	Page<AdoptionApplication> findByAdopter_IdOrderByCreatedAtDesc(Long adopterId, Pageable pageable);
 
-	// Sem OrderBy no nome do método: a ordenação vem do Pageable, para que o
-	// relatório de compatibilidade possa ranquear por score.
+	// No OrderBy in the method name: the ordering comes from the Pageable, so
+	// that the compatibility report can rank by score.
 	@EntityGraph(attributePaths = { "pet", "adopter" })
 	Page<AdoptionApplication> findByPet_Id(Long petId, Pageable pageable);
 

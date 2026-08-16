@@ -9,12 +9,12 @@ spring:
 
   jpa:
     hibernate:
-      # O schema pertence ao Flyway. "validate" faz o Hibernate conferir, no
-      # boot, se as entidades batem com o banco -- drift falha rápido, em vez
-      # de virar erro obscuro em runtime.
+      # The schema belongs to Flyway. "validate" makes Hibernate check at boot
+      # that the entities match the database -- drift fails fast instead of
+      # turning into an obscure runtime error.
       ddl-auto: validate
-    # Desligado de propósito: com open-in-view a sessão fica aberta durante a
-    # serialização da resposta, escondendo lazy loading em queries N+1.
+    # Off on purpose: with open-in-view the session stays open during response
+    # serialisation, hiding lazy loading behind N+1 queries.
     open-in-view: false
     properties:
       hibernate:
@@ -29,9 +29,9 @@ spring:
     problemdetails:
       enabled: true
 
-# Sem valor padrão de propósito: sem JWT_SECRET no ambiente, a aplicação não
-# sobe. É preferível falhar no boot, com mensagem clara, a subir assinando
-# tokens com um segredo de exemplo que alguém esqueceu de trocar.
+# No default on purpose: without JWT_SECRET in the environment the application
+# does not start. Failing at boot with a clear message beats coming up and
+# signing tokens with an example secret someone forgot to change.
 app:
   security:
     jwt:

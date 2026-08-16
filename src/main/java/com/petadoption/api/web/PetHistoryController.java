@@ -30,11 +30,11 @@ public class PetHistoryController {
 	}
 
 	/**
-	 * Histórico de rastreabilidade — público, como o resto do catálogo.
+	 * The traceability history -- public, like the rest of the catalogue.
 	 *
-	 * <p>Saber que o animal foi resgatado há oito meses e passou por dois
-	 * abrigos é parte do que faz alguém confiar numa adoção. A identidade de
-	 * tutores pessoas físicas não aparece.
+	 * <p>Knowing the animal was rescued eight months ago and passed through two
+	 * shelters is part of what makes someone trust an adoption. The identity of
+	 * private individual guardians does not appear.
 	 */
 	@GetMapping("/history")
 	public List<StayResponse> history(@PathVariable Long petId) {
@@ -50,7 +50,7 @@ public class PetHistoryController {
 		return StayResponse.from(history.addStay(petId, request.toData(), jwt.getSubject()));
 	}
 
-	/** Ficha de saúde: detalhe clínico, restrito a quem administra o animal. */
+	/** The health record: clinical detail, restricted to whoever manages the animal. */
 	@GetMapping("/health-records")
 	public List<HealthRecordResponse> healthRecords(@PathVariable Long petId,
 			@AuthenticationPrincipal Jwt jwt) {

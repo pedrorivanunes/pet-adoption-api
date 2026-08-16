@@ -17,7 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class OrganizationIntegrationTest extends AbstractIntegrationTest {
 
 	@Test
-	@DisplayName("quem cria a organização já nasce como ADMIN dela")
+	@DisplayName("whoever creates the organization is born its ADMIN")
 	void creatorBecomesAdmin() throws Exception {
 		String token = tokenFor("fundadora@example.com");
 		long orgId = createOrganization(token, "Patas Felizes");
@@ -30,7 +30,7 @@ class OrganizationIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("listagem de organizações é pública; criar exige token")
+	@DisplayName("listing organizations is public; creating one requires a token")
 	void listingIsPublicButCreatingIsNot() throws Exception {
 		mockMvc.perform(get("/api/organizations"))
 				.andExpect(status().isOk())
@@ -43,10 +43,10 @@ class OrganizationIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("quem não tem vínculo não vê o quadro de membros nem edita a organização")
+	@DisplayName("a non-member neither sees the member list nor edits the organization")
 	void outsiderIsBlocked() throws Exception {
 		String admin = tokenFor("dona-org@example.com");
-		long orgId = createOrganization(admin, "Abrigo Central");
+		long orgId = createOrganization(admin, "Central Shelter");
 		String outsider = tokenFor("curiosa@example.com");
 
 		mockMvc.perform(get("/api/organizations/" + orgId + "/members")
@@ -65,38 +65,38 @@ class OrganizationIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("STAFF cuida dos pets, mas não mexe no quadro de membros")
+	@DisplayName("STAFF cares for the pets but does not touch the member list")
 	void staffCannotManageMembers() throws Exception {
 		String admin = tokenFor("admin-membros@example.com");
-		long orgId = createOrganization(admin, "Abrigo Membros");
+		long orgId = createOrganization(admin, "Members Shelter");
 		String staff = tokenFor("staff-membros@example.com");
 		addMember(admin, orgId, "staff-membros@example.com", "STAFF");
 
-		// enxerga o quadro, porque tem vínculo
+		// sees the list, because they are a member
 		mockMvc.perform(get("/api/organizations/" + orgId + "/members")
 						.header("Authorization", bearer(staff)))
 				.andExpect(status().isOk());
 
-		// mas não pode alterá-lo
+		// but cannot change it
 		mockMvc.perform(post("/api/organizations/" + orgId + "/members")
 						.header("Authorization", bearer(staff))
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(body(Map.of("email", "admin-membros@example.com", "role", "STAFF"))))
 				.andExpect(status().isForbidden());
 
-		// nem a organização em si
+		// nor the organization itself
 		mockMvc.perform(put("/api/organizations/" + orgId)
 						.header("Authorization", bearer(staff))
 						.contentType(MediaType.APPLICATION_JSON)
-						.content(body(Map.of("name", "Renomeada pelo Staff"))))
+						.content(body(Map.of("name", "Renamed By Staff"))))
 				.andExpect(status().isForbidden());
 	}
 
 	@Test
-	@DisplayName("vincular duas vezes a mesma pessoa devolve 409")
+	@DisplayName("linking the same person twice returns 409")
 	void duplicateMembershipIsRejected() throws Exception {
 		String admin = tokenFor("admin-dup@example.com");
-		long orgId = createOrganization(admin, "Abrigo Duplicado");
+		long orgId = createOrganization(admin, "Duplicate Shelter");
 		tokenFor("membro-dup@example.com");
 
 		addMember(admin, orgId, "membro-dup@example.com", "STAFF");
@@ -109,30 +109,30 @@ class OrganizationIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("a organização não pode ficar sem administrador")
+	@DisplayName("the organization cannot be left without an administrator")
 	void lastAdminCannotLeaveOrBeDemoted() throws Exception {
 		String admin = tokenFor("unica-admin@example.com");
-		long orgId = createOrganization(admin, "Abrigo Solo");
+		long orgId = createOrganization(admin, "Solo Shelter");
 		long adminId = userIdOf(admin);
 
-		// rebaixar a si mesma deixaria a organização sem ninguém no comando
+		// demoting themselves would leave the organization with nobody in charge
 		mockMvc.perform(put("/api/organizations/" + orgId + "/members/" + adminId)
 						.header("Authorization", bearer(admin))
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(body(Map.of("role", "STAFF"))))
 				.andExpect(status().isConflict());
 
-		// remover-se, idem
+		// removing themselves, likewise
 		mockMvc.perform(delete("/api/organizations/" + orgId + "/members/" + adminId)
 						.header("Authorization", bearer(admin)))
 				.andExpect(status().isConflict());
 	}
 
 	@Test
-	@DisplayName("com outro ADMIN no quadro, a saída do primeiro é permitida")
+	@DisplayName("with another ADMIN on the list, the first one may leave")
 	void adminCanLeaveOnceThereIsAnother() throws Exception {
 		String first = tokenFor("primeira-admin@example.com");
-		long orgId = createOrganization(first, "Abrigo Dupla");
+		long orgId = createOrganization(first, "Double Shelter");
 		long firstId = userIdOf(first);
 
 		tokenFor("segunda-admin@example.com");
@@ -147,7 +147,7 @@ class OrganizationIntegrationTest extends AbstractIntegrationTest {
 	@DisplayName("ADMIN promove STAFF e depois o remove")
 	void adminPromotesAndRemovesMember() throws Exception {
 		String admin = tokenFor("gestora@example.com");
-		long orgId = createOrganization(admin, "Abrigo Gestão");
+		long orgId = createOrganization(admin, "Governance Shelter");
 		String member = tokenFor("promovido@example.com");
 		long memberId = userIdOf(member);
 
@@ -166,10 +166,10 @@ class OrganizationIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("vincular pessoa não cadastrada devolve 404")
+	@DisplayName("linking an unregistered person returns 404")
 	void addingUnknownPersonReturnsNotFound() throws Exception {
 		String admin = tokenFor("admin-404@example.com");
-		long orgId = createOrganization(admin, "Abrigo Fantasma");
+		long orgId = createOrganization(admin, "Ghost Shelter");
 
 		mockMvc.perform(post("/api/organizations/" + orgId + "/members")
 						.header("Authorization", bearer(admin))
@@ -179,20 +179,20 @@ class OrganizationIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("papel de membro fora do domínio é rejeitado com 400")
+	@DisplayName("a member role outside the domain is rejected with 400")
 	void invalidRoleIsRejected() throws Exception {
-		String admin = tokenFor("admin-papel@example.com");
-		long orgId = createOrganization(admin, "Abrigo Papel");
-		tokenFor("alvo-papel@example.com");
+		String admin = tokenFor("admin-role@example.com");
+		long orgId = createOrganization(admin, "Role Shelter");
+		tokenFor("target-role@example.com");
 
 		mockMvc.perform(post("/api/organizations/" + orgId + "/members")
 						.header("Authorization", bearer(admin))
 						.contentType(MediaType.APPLICATION_JSON)
-						.content(body(Map.of("email", "alvo-papel@example.com", "role", "PRESIDENTE"))))
+						.content(body(Map.of("email", "target-role@example.com", "role", "PRESIDENT"))))
 				.andExpect(status().isBadRequest());
 	}
 
-	// ----------------------------------------------------------------- apoio --
+	// --------------------------------------------------------------- helpers --
 
 	private void addMember(String adminToken, long orgId, String email, String role) throws Exception {
 		mockMvc.perform(post("/api/organizations/" + orgId + "/members")

@@ -3,17 +3,17 @@ package com.petadoption.api.domain.compatibility;
 import java.util.List;
 
 /**
- * Resultado de uma avaliação de compatibilidade entre pet e adotante.
+ * The result of evaluating compatibility between a pet and an adopter.
  *
- * <p>Carrega a decomposição, e não só o número. Um ranking que diz "87" e nada
- * mais é impossível de conferir e impossível de explicar a quem está adotando;
- * com os fatores, dá para mostrar <em>por que</em> aquele animal apareceu no
- * topo — e dá para depurar quando aparecer no lugar errado.
+ * <p>It carries the breakdown, not just the number. A ranking that says "87" and
+ * nothing else is impossible to check and impossible to explain to the person
+ * adopting; with the factors, you can show <em>why</em> that animal came out on
+ * top -- and you can debug it when it comes out in the wrong place.
  *
- * @param score     soma dos pontos dos fatores
- * @param blocked   há fator impeditivo
- * @param factors   o que somou ou subtraiu, e quanto
- * @param blockers  motivos da eliminação, quando houver
+ * @param score     sum of the factor points
+ * @param blocked   whether a blocking factor is present
+ * @param factors   what added or subtracted, and how much
+ * @param blockers  reasons for elimination, when there are any
  */
 public record CompatibilityResult(
 		int score,
@@ -22,9 +22,9 @@ public record CompatibilityResult(
 		List<String> blockers) {
 
 	/**
-	 * @param category rótulo estável do fator (ex.: {@code SPECIES})
-	 * @param points   contribuição para o score
-	 * @param detail   explicação legível
+	 * @param category stable label for the factor (e.g. {@code SPECIES})
+	 * @param points   contribution to the score
+	 * @param detail   human-readable explanation
 	 */
 	public record Factor(String category, int points, String detail) {
 	}

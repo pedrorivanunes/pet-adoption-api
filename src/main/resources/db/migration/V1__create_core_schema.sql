@@ -1,14 +1,14 @@
 -- =========================================================================
--- V1 -- Núcleo do schema: identidade, organizações e pets.
+-- V1 -- Core schema: identity, organizations and pets.
 --
--- Nota deliberada: nenhuma instrução usa "IF NOT EXISTS". Migration é
--- determinística -- se o objeto já existe, algo saiu do lugar e o build
--- deve falhar alto em vez de mascarar o desvio.
+-- A deliberate note: no statement uses "IF NOT EXISTS". A migration is
+-- deterministic -- if the object already exists, something has moved and the
+-- build should fail loudly instead of masking the drift.
 -- =========================================================================
 
 
 -- =========================================================================
--- IDENTIDADE E PERMISSÕES
+-- IDENTITY AND PERMISSIONS
 -- =========================================================================
 
 CREATE TABLE users (
@@ -21,18 +21,19 @@ CREATE TABLE users (
     updated_at    TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
 
--- Unicidade sobre lower(email): a aplicação normaliza o e-mail na escrita,
--- mas o índice garante que "Maria@x.com" e "maria@x.com" não coexistam nem
--- que a normalização falhe em algum caminho novo.
+-- Uniqueness over lower(email): the application normalises email on write, but
+-- the index is what guarantees that "Maria@x.com" and "maria@x.com" cannot
+-- coexist even if normalisation is missed on some new code path.
 CREATE UNIQUE INDEX ux_users_email_lower ON users (lower(email));
 
 
--- Papéis globais, propositalmente grossos. Autorização fina sobre recursos
--- de uma organização vem do vínculo (organization_memberships), não daqui.
+-- Global roles, deliberately coarse. Fine-grained authorization over an
+-- organization's resources comes from the membership
+-- (organization_memberships), not from here.
 --
--- Os nomes NÃO carregam o prefixo "ROLE_": o prefixo é convenção interna do
--- Spring Security, não conceito do domínio. A aplicação usa hasAuthority()
--- com o nome exato, sem concatenação implícita em lugar nenhum.
+-- The names do NOT carry the "ROLE_" prefix: that prefix is a Spring Security
+-- internal convention, not a domain concept. The application uses
+-- hasAuthority() with the exact name, with no implicit concatenation anywhere.
 CREATE TABLE roles (
     id   BIGSERIAL   PRIMARY KEY,
     name VARCHAR(40) NOT NULL,
@@ -51,10 +52,10 @@ INSERT INTO roles (name) VALUES ('USER'), ('ADMIN');
 
 
 -- =========================================================================
--- ORGANIZAÇÕES
+-- ORGANIZATIONS
 --
--- Organização não é usuário: não tem login nem credencial. Quem age em nome
--- dela é sempre uma pessoa, através do vínculo abaixo.
+-- An organization is not a user: it has no login and no credentials. Whoever
+-- acts on its behalf is always a person, through the membership below.
 -- =========================================================================
 
 CREATE TABLE organizations (
@@ -68,13 +69,13 @@ CREATE TABLE organizations (
     updated_at  TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
 
--- Fonte ÚNICA da verdade sobre quem pode agir em nome de uma organização.
--- Não existe coluna "admin_user_id" em organizations: duas fontes para o
--- mesmo fato divergem cedo ou tarde.
+-- The SINGLE source of truth about who may act on behalf of an organization.
+-- There is no "admin_user_id" column on organizations: two sources for the
+-- same fact drift apart sooner or later.
 --
--- UNIQUE (organization_id, user_id): uma pessoa tem no máximo um vínculo por
--- organização. O papel é coluna, não parte da chave -- promover de STAFF para
--- ADMIN é um UPDATE, não uma segunda linha.
+-- UNIQUE (organization_id, user_id): a person has at most one membership per
+-- organization. The role is a column, not part of the key -- promoting from
+-- STAFF to ADMIN is an UPDATE, not a second row.
 CREATE TABLE organization_memberships (
     id              BIGSERIAL   PRIMARY KEY,
     organization_id BIGINT      NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -101,32 +102,32 @@ CREATE TABLE pets (
     sex                      VARCHAR(10),
     size                     VARCHAR(20),
 
-    -- Data de nascimento em vez de idade em anos: idade derivada nunca fica
-    -- desatualizada. Animal resgatado raramente tem data exata, então a
-    -- estimativa é registrada explicitamente em vez de fingir precisão.
+    -- A birth date rather than an age in years: a derived age never goes
+    -- stale. A rescued animal rarely has an exact date, so the estimate is
+    -- recorded explicitly instead of faking precision.
     birth_date               DATE,
     birth_date_estimated     BOOLEAN      NOT NULL DEFAULT true,
 
     status                   VARCHAR(20)  NOT NULL,
 
-    -- Dono é pessoa OU organização, nunca ambos e nunca nenhum.
-    -- RESTRICT nos dois: apagar um dono que ainda tem pets deve falhar de
-    -- forma explícita. (Com SET NULL o pet ficaria sem dono nenhum e violaria
-    -- o próprio CHECK abaixo -- foi exatamente o defeito do schema anterior.)
+    -- The owner is a person OR an organization, never both and never neither.
+    -- RESTRICT on both: deleting an owner that still has pets should fail
+    -- explicitly. (With SET NULL the pet would be left with no owner at all
+    -- and would violate the very CHECK below.)
     owner_user_id            BIGINT       REFERENCES users(id)         ON DELETE RESTRICT,
     owner_org_id             BIGINT       REFERENCES organizations(id) ON DELETE RESTRICT,
 
-    -- Fatores de saúde usados no cálculo de compatibilidade. NOT NULL com
-    -- default: ausência de informação vira "false" no cadastro, e não NULL
-    -- espalhando ternário por toda a regra de pontuação.
+    -- Health factors used by the compatibility calculation. NOT NULL with a
+    -- default: missing information becomes "false" at registration, rather
+    -- than a NULL that spreads ternaries through the whole scoring rule.
     has_special_needs        BOOLEAN      NOT NULL DEFAULT false,
     has_continuous_treatment BOOLEAN      NOT NULL DEFAULT false,
     has_chronic_disease      BOOLEAN      NOT NULL DEFAULT false,
     requires_constant_care   BOOLEAN      NOT NULL DEFAULT false,
 
-    -- Exceção proposital à regra acima: aqui NULL significa "não se sabe".
-    -- Distinguir "sabidamente não convive" de "desconhecido" importa, porque
-    -- só o primeiro é fator impeditivo de adoção.
+    -- A deliberate exception to the rule above: here NULL means "unknown".
+    -- Telling "known not to get along" apart from "unknown" matters, because
+    -- only the first is a blocker for adoption.
     good_with_other_animals  BOOLEAN,
 
     health_notes             VARCHAR(1000),

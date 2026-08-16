@@ -33,14 +33,14 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Popula a base com um cenário completo, para que o projeto seja explorável em
- * poucos minutos sem precisar montar dados na mão.
+ * Fills the database with a complete scenario, so the project can be explored in
+ * a few minutes without assembling data by hand.
  *
- * <p>Ativo apenas no perfil {@code demo}. E, deliberadamente, tudo é criado
- * <strong>pelos serviços da aplicação</strong>, não por INSERTs: dado semeado
- * assim não consegue existir em estado que a API recusaria. Um seed em SQL
- * puro pode criar exatamente a inconsistência que as regras impedem, e aí a
- * demonstração passa a mostrar algo que o sistema não produz.
+ * <p>Active only under the {@code demo} profile. And, deliberately, everything
+ * is created <strong>through the application services</strong>, not through
+ * INSERTs: data seeded this way cannot exist in a state the API would reject. A
+ * seed written in raw SQL can create exactly the inconsistency the rules
+ * prevent, and then the demo shows something the system does not produce.
  */
 @Component
 @Profile("demo")
@@ -48,8 +48,8 @@ public class DemoDataSeeder implements ApplicationRunner {
 
 	private static final Logger log = LoggerFactory.getLogger(DemoDataSeeder.class);
 
-	/** Igual para todas as contas de exemplo — está documentado no README. */
-	public static final String PASSWORD = "senha-de-demonstracao";
+	/** The same for every sample account -- it is documented in the README. */
+	public static final String PASSWORD = "demo-password";
 
 	private final UserRepository users;
 	private final UserService userService;
@@ -81,114 +81,114 @@ public class DemoDataSeeder implements ApplicationRunner {
 	@Override
 	public void run(ApplicationArguments args) {
 		if (users.count() > 0) {
-			log.info("Base já contém dados; seed de demonstração ignorado.");
+			log.info("Database already contains data; demo seed skipped.");
 			return;
 		}
 
-		log.info("Perfil 'demo' ativo — semeando cenário de exemplo.");
+		log.info("Profile 'demo' active -- seeding the sample scenario.");
 
-		// ---------------------------------------------------------- pessoas --
-		String ana = register("Ana Ribeiro", "ana@exemplo.br", "51999990001");
-		String bruno = register("Bruno Machado", "bruno@exemplo.br", "51999990002");
-		String carla = register("Carla Souza", "carla@exemplo.br", "51999990003");
-		String diego = register("Diego Alves", "diego@exemplo.br", "51999990004");
-		String elisa = register("Elisa Prado", "elisa@exemplo.br", "51999990005");
+		// ----------------------------------------------------------- people --
+		String ana = register("Ana Ribeiro", "ana@example.com", "51999990001");
+		String bruno = register("Bruno Machado", "bruno@example.com", "51999990002");
+		String carla = register("Carla Souza", "carla@example.com", "51999990003");
+		String diego = register("Diego Alves", "diego@example.com", "51999990004");
+		String elisa = register("Elisa Prado", "elisa@example.com", "51999990005");
 
-		// ----------------------------------------------------- organização ---
-		Organization abrigo = organizations.create(new OrganizationService.OrganizationData(
-				"Abrigo Quatro Patas",
-				"Abrigo comunitário de Porto Alegre, atuando desde 2015.",
-				"contato@quatropatas.exemplo.br",
+		// ---------------------------------------------------- organization ---
+		Organization shelter = organizations.create(new OrganizationService.OrganizationData(
+				"Four Paws Shelter",
+				"Community shelter in Porto Alegre, running since 2015.",
+				"contact@fourpaws.example.com",
 				"5133330000",
-				"Rua das Acácias, 120 — Porto Alegre/RS"), ana);
+				"Rua das Acacias 120, Porto Alegre/RS"), ana);
 
-		organizations.addMember(abrigo.getId(), "bruno@exemplo.br", OrgMemberRole.STAFF, ana);
+		organizations.addMember(shelter.getId(), "bruno@example.com", OrgMemberRole.STAFF, ana);
 
-		// --------------------------------------------------------- animais ---
-		// Jovem, saudável e sociável — o caso fácil.
-		Pet luna = shelterPet(abrigo.getId(), ana, "Luna", "dog", "Vira-lata", PetSex.FEMALE, PetSize.MEDIUM,
+		// -------------------------------------------------------- animals ---
+		// Young, healthy and sociable -- the easy case.
+		Pet luna = shelterPet(shelter.getId(), ana, "Luna", "dog", "Mixed breed", PetSex.FEMALE, PetSize.MEDIUM,
 				LocalDate.now().minusYears(3), new Health(false, false, false), true);
 
-		// Idoso com tratamento contínuo: só combina com quem tem tempo.
-		Pet thor = shelterPet(abrigo.getId(), ana, "Thor", "dog", "Pastor alemão", PetSex.MALE, PetSize.LARGE,
+		// Elderly, on continuous treatment: only a match for someone with time.
+		Pet thor = shelterPet(shelter.getId(), ana, "Thor", "dog", "German shepherd", PetSex.MALE, PetSize.LARGE,
 				LocalDate.now().minusYears(7), new Health(true, true, true), true);
 
-		// Doença crônica e não convive com outros animais: dois filtros de uma vez.
-		Pet mia = shelterPet(abrigo.getId(), ana, "Mia", "cat", null, PetSex.FEMALE, PetSize.SMALL,
+		// Chronic illness and does not get along with other animals: two filters at once.
+		Pet mia = shelterPet(shelter.getId(), ana, "Mia", "cat", null, PetSex.FEMALE, PetSize.SMALL,
 				LocalDate.now().minusYears(2), new Health(false, true, false), false);
 
-		Pet bidu = shelterPet(abrigo.getId(), ana, "Bidu", "dog", "Poodle", PetSex.MALE, PetSize.SMALL,
+		Pet bidu = shelterPet(shelter.getId(), ana, "Bidu", "dog", "Poodle", PetSex.MALE, PetSize.SMALL,
 				LocalDate.now().minusYears(5), new Health(false, false, false), true);
 
-		// Pet de tutora particular, para o catálogo não ser só de abrigo.
-		pets.create(new PetService.PetData("Nina", "cat", "Siamês", PetSex.FEMALE, PetSize.MEDIUM,
+		// A private guardian's pet, so the catalogue is not shelter-only.
+		pets.create(new PetService.PetData("Nina", "cat", "Siamese", PetSex.FEMALE, PetSize.MEDIUM,
 				LocalDate.now().minusYears(1), true, null,
-				false, false, false, false, true, "Saudável, castrada."), null, elisa);
+				false, false, false, false, true, "Healthy, neutered."), null, elisa);
 
-		// -------------------------------------------------- rastreabilidade --
-		rescueThenShelter(luna.getId(), abrigo.getId(), ana, "Avenida Ipiranga, Porto Alegre", 14);
-		rescueThenShelter(thor.getId(), abrigo.getId(), ana, "Parque Farroupilha, Porto Alegre", 8);
-		rescueThenShelter(mia.getId(), abrigo.getId(), ana, "Rua General Lima e Silva, Porto Alegre", 5);
-		rescueThenShelter(bidu.getId(), abrigo.getId(), ana, "Entregue por antigo tutor", 6);
+		// ------------------------------------------------------ traceability --
+		rescueThenShelter(luna.getId(), shelter.getId(), ana, "Avenida Ipiranga, Porto Alegre", 14);
+		rescueThenShelter(thor.getId(), shelter.getId(), ana, "Parque Farroupilha, Porto Alegre", 8);
+		rescueThenShelter(mia.getId(), shelter.getId(), ana, "Rua General Lima e Silva, Porto Alegre", 5);
+		rescueThenShelter(bidu.getId(), shelter.getId(), ana, "Handed over by a previous guardian", 6);
 
 		history.addHealthRecord(luna.getId(), new PetHistoryService.HealthData(
-				HealthRecordKind.VACCINATION, LocalDate.now().minusMonths(11), "V10, dose única"), ana);
+				HealthRecordKind.VACCINATION, LocalDate.now().minusMonths(11), "DHPP, single dose"), ana);
 		history.addHealthRecord(thor.getId(), new PetHistoryService.HealthData(
 				HealthRecordKind.TREATMENT, LocalDate.now().minusMonths(2),
-				"Displasia coxofemoral — fisioterapia semanal"), ana);
+				"Hip dysplasia -- weekly physiotherapy"), ana);
 		history.addHealthRecord(mia.getId(), new PetHistoryService.HealthData(
 				HealthRecordKind.ILLNESS, LocalDate.now().minusMonths(4),
-				"Insuficiência renal crônica, tratada com dieta específica"), ana);
+				"Chronic kidney failure, managed with a specific diet"), ana);
 
-		// ------------------------------------------------------- adotantes ---
-		// Carla procura exatamente o perfil da Luna.
+		// ------------------------------------------------------- adopters ---
+		// Carla is looking for exactly Luna's profile.
 		profiles.save(new AdopterProfileService.ProfileData(
 				HousingType.HOUSE, false, 2, false, true,
-				"dog", "Vira-lata", PetSize.MEDIUM, PetSex.FEMALE,
+				"dog", "Mixed breed", PetSize.MEDIUM, PetSex.FEMALE,
 				false, false, false), carla);
 
-		// Diego já tem animais e aceita cuidados especiais.
+		// Diego already has animals and accepts special care.
 		profiles.save(new AdopterProfileService.ProfileData(
 				HousingType.APARTMENT, true, 3, true, true,
 				"dog", null, PetSize.SMALL, PetSex.MALE,
 				true, true, false), diego);
 
-		// -------------------------------------------- candidatura pendente ---
-		applications.apply(luna.getId(), "Tenho pátio grande e trabalho de casa.", carla);
+		// ------------------------------------------- pending application ---
+		applications.apply(luna.getId(), "I have a large yard and I work from home.", carla);
 
-		// ------------------------------------------- adoção já concretizada --
-		AdoptionApplication aprovada = applications.apply(
-				bidu.getId(), "Meu apartamento é tranquilo e já tenho uma cadela idosa.", diego);
-		applications.approve(aprovada.getId(), "Perfil combina bem com o Bidu.", ana);
+		// -------------------------------------------- adoption already done --
+		AdoptionApplication approved = applications.apply(
+				bidu.getId(), "My flat is quiet and I already have an elderly dog.", diego);
+		applications.approve(approved.getId(), "The profile is a good fit for Bidu.", ana);
 
 		LocalDate adoptedOn = LocalDate.now().minusMonths(4);
 		backdateAdoption(bidu.getId(), adoptedOn);
 
 		followUps.record(bidu.getId(), new FollowUpService.FollowUpData(
-				FollowUpKind.VISIT, adoptedOn.plusDays(15), "Visita inicial: adaptação tranquila."), ana);
+				FollowUpKind.VISIT, adoptedOn.plusDays(15), "First visit: settling in well."), ana);
 		followUps.record(bidu.getId(), new FollowUpService.FollowUpData(
-				FollowUpKind.CALL, adoptedOn.plusMonths(1), "Contato telefônico, tudo bem."), ana);
-		// De propósito não há contato nos meses seguintes: o relatório precisa
-		// mostrar lacuna em algum cenário para que ela seja vista funcionando.
+				FollowUpKind.CALL, adoptedOn.plusMonths(1), "Phone call, all well."), ana);
+		// Deliberately no contact over the following months: the report needs a
+		// scenario with a gap for that part of it to be seen working.
 		followUps.record(bidu.getId(), new FollowUpService.FollowUpData(
-				FollowUpKind.MESSAGE, LocalDate.now().minusDays(3), "Fotos recebidas, animal saudável."), ana);
+				FollowUpKind.MESSAGE, LocalDate.now().minusDays(3), "Photos received, animal healthy."), ana);
 
-		// Depois da adoção quem cuida da ficha de saúde é o novo tutor.
+		// After the adoption, the health record is the new guardian's to keep.
 		history.addHealthRecord(bidu.getId(), new PetHistoryService.HealthData(
-				HealthRecordKind.NEUTERING, adoptedOn.plusMonths(1), "Castração realizada"), diego);
+				HealthRecordKind.NEUTERING, adoptedOn.plusMonths(1), "Neutering carried out"), diego);
 
-		log.info("Seed concluído: 5 pessoas, 1 organização, 5 pets, 1 candidatura pendente e 1 adoção "
-				+ "com acompanhamento. Senha de todas as contas: {}", PASSWORD);
+		log.info("Seed complete: 5 people, 1 organization, 5 pets, 1 pending application and 1 adoption "
+				+ "with follow-up. Password for every account: {}", PASSWORD);
 	}
 
-	// ======================================================== apoio ==========
+	// ======================================================= helpers =========
 
 	private String register(String name, String email, String phone) {
 		userService.register(new UserService.NewUser(name, email, PASSWORD, phone));
 		return email;
 	}
 
-	/** Condições de saúde de um animal do seed. */
+	/** Health conditions of one seeded animal. */
 	private record Health(boolean specialNeedsAndTreatment, boolean chronicDisease, boolean constantCare) {
 	}
 
@@ -200,32 +200,31 @@ public class DemoDataSeeder implements ApplicationRunner {
 				health.constantCare(), goodWithOthers, null), orgId, actor);
 	}
 
-	/** Resgate na rua e, meses depois, entrada no abrigo. */
+	/** A street rescue and, months later, arrival at the shelter. */
 	private void rescueThenShelter(Long petId, Long orgId, String actor, String where, int monthsAgo) {
 		history.addStay(petId, new PetHistoryService.StayData(StayKind.RESCUE, where,
-				LocalDate.now().minusMonths(monthsAgo), "Resgatado em situação de rua", null), actor);
+				LocalDate.now().minusMonths(monthsAgo), "Rescued off the street", null), actor);
 
 		history.addStay(petId, new PetHistoryService.StayData(StayKind.SHELTER,
-				"Abrigo Quatro Patas — Porto Alegre/RS",
+				"Four Paws Shelter -- Porto Alegre/RS",
 				LocalDate.now().minusMonths(monthsAgo).plusDays(20), null, orgId), actor);
 	}
 
 	/**
-	 * Recua a data da adoção e da permanência correspondente.
+	 * Backdates the adoption and its matching stay.
 	 *
-	 * <p>Único ponto do seed que escreve direto no repositório: a aprovação
-	 * carimba a data de hoje, e uma adoção de hoje deixaria o relatório de
-	 * acompanhamento sem nada para mostrar. É viagem no tempo de demonstração,
-	 * não regra de negócio — por isso está isolada aqui e não no serviço.
+	 * <p>The only place in the seed that writes straight to the repository:
+	 * approval stamps today's date, and an adoption dated today would leave the
+	 * follow-up report with nothing to show. This is demo time travel, not a
+	 * business rule -- which is why it is isolated here and not in the service.
 	 */
 	private void backdateAdoption(Long petId, LocalDate adoptedOn) {
 		Adoption adoption = adoptions.findFirstByPet_IdOrderByAdoptedOnDescIdDesc(petId).orElseThrow();
 		adoption.setAdoptedOn(adoptedOn);
 		adoptions.save(adoption);
 
-		// A permanência no abrigo foi encerrada hoje pela aprovação; recuar só a
-		// adoção deixaria a linha do tempo com um salto. As duas pontas andam
-		// juntas.
+		// The shelter stay was closed today by the approval; backdating only the
+		// adoption would leave a jump in the timeline. Both ends move together.
 		LocalDate today = LocalDate.now();
 		List<PetStay> timeline = stays.findByPet_IdOrderByStartedOnAscIdAsc(petId);
 		for (PetStay stay : timeline) {

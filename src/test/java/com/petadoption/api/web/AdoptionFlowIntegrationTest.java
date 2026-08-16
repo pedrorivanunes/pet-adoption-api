@@ -14,18 +14,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Perfil de adotante e ciclo completo da candidatura.
+ * The adopter profile and the full application cycle.
  *
- * <p>Estas regras não têm vida fora do banco — unicidade de candidatura
- * pendente, transição de estado, efeito em cascata da aprovação — então são
- * testadas onde de fato moram, e não contra repositórios simulados.
+ * <p>These rules have no life outside the database -- uniqueness of a pending
+ * application, state transitions, the cascade effect of an approval -- so they
+ * are tested where they actually live, and not against mocked repositories.
  */
 class AdoptionFlowIntegrationTest extends AbstractIntegrationTest {
 
-	// ==================================================== perfil =============
+	// =================================================== profile =============
 
 	@Test
-	@DisplayName("perfil ainda não preenchido devolve 404 com explicação")
+	@DisplayName("a profile not yet filled in returns 404 with an explanation")
 	void missingProfileReturnsNotFound() throws Exception {
 		String token = tokenFor("sem-perfil@example.com");
 
@@ -34,7 +34,7 @@ class AdoptionFlowIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("PUT do perfil é idempotente: cria e depois atualiza")
+	@DisplayName("PUT on the profile is idempotent: it creates and then updates")
 	void profileIsUpsert() throws Exception {
 		String token = tokenFor("perfil@example.com");
 
@@ -45,8 +45,8 @@ class AdoptionFlowIntegrationTest extends AbstractIntegrationTest {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.housingType").value("APARTMENT"))
 				.andExpect(jsonPath("$.hasOtherPets").value(true))
-				// não informado assume "sim": o impeditivo por falta de tempo
-				// só dispara com negativa explícita
+				// unset means "yes": the no-time blocker only fires on an
+				// explicit negative
 				.andExpect(jsonPath("$.hasTimeAvailability").value(true));
 
 		mockMvc.perform(put("/api/users/me/adopter-profile")
@@ -56,7 +56,7 @@ class AdoptionFlowIntegrationTest extends AbstractIntegrationTest {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.housingType").value("RURAL"))
 				.andExpect(jsonPath("$.hasOtherPets").value(false))
-				// espécie preferida usa a mesma forma canônica do cadastro do pet
+				// the preferred species uses the same canonical form as the pet record
 				.andExpect(jsonPath("$.preferredSpecies").value("CAT"));
 
 		mockMvc.perform(get("/api/users/me/adopter-profile").header("Authorization", bearer(token)))
@@ -65,7 +65,7 @@ class AdoptionFlowIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("perfil sem tipo de moradia é rejeitado com 400")
+	@DisplayName("a profile without a housing type is rejected with 400")
 	void profileRequiresHousingType() throws Exception {
 		String token = tokenFor("perfil-invalido@example.com");
 
@@ -76,13 +76,13 @@ class AdoptionFlowIntegrationTest extends AbstractIntegrationTest {
 				.andExpect(status().isBadRequest());
 	}
 
-	// ============================================== candidatura ==============
+	// ============================================= application ==============
 
 	@Test
-	@DisplayName("candidatar-se sem perfil preenchido é recusado")
+	@DisplayName("applying without a filled-in profile is refused")
 	void applyingRequiresProfile() throws Exception {
-		String tutor = tokenFor("tutor-a@example.com");
-		long petId = createPet(tutor, "Nina");
+		String guardian = tokenFor("guardian-a@example.com");
+		long petId = createPet(guardian, "Nina");
 		String adopter = tokenFor("candidata-sem-perfil@example.com");
 
 		mockMvc.perform(post("/api/adoptions/applications")
@@ -93,24 +93,24 @@ class AdoptionFlowIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("não é possível se candidatar ao próprio pet")
+	@DisplayName("you cannot apply for your own pet")
 	void cannotApplyToOwnPet() throws Exception {
-		String tutor = tokenFor("tutor-b@example.com");
-		saveAdopterProfile(tutor);
-		long petId = createPet(tutor, "Bidu");
+		String guardian = tokenFor("guardian-b@example.com");
+		saveAdopterProfile(guardian);
+		long petId = createPet(guardian, "Bidu");
 
 		mockMvc.perform(post("/api/adoptions/applications")
-						.header("Authorization", bearer(tutor))
+						.header("Authorization", bearer(guardian))
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(body(Map.of("petId", petId))))
 				.andExpect(status().isConflict());
 	}
 
 	@Test
-	@DisplayName("candidatura válida nasce pendente")
+	@DisplayName("a valid application is born pending")
 	void createsPendingApplication() throws Exception {
-		String tutor = tokenFor("tutor-c@example.com");
-		long petId = createPet(tutor, "Mel");
+		String guardian = tokenFor("guardian-c@example.com");
+		long petId = createPet(guardian, "Mel");
 		String adopter = tokenFor("candidata-c@example.com");
 		saveAdopterProfile(adopter);
 
@@ -126,11 +126,11 @@ class AdoptionFlowIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("um pet por vez: segunda candidatura pendente é recusada, e cancelar libera")
+	@DisplayName("one pet at a time: a second pending application is refused, and cancelling frees the slot")
 	void onlyOnePendingApplicationAtATime() throws Exception {
-		String tutor = tokenFor("tutor-d@example.com");
-		long primeiro = createPet(tutor, "Primeiro");
-		long segundo = createPet(tutor, "Segundo");
+		String guardian = tokenFor("guardian-d@example.com");
+		long primeiro = createPet(guardian, "Primeiro");
+		long segundo = createPet(guardian, "Segundo");
 
 		String adopter = tokenFor("indecisa@example.com");
 		saveAdopterProfile(adopter);
@@ -147,7 +147,7 @@ class AdoptionFlowIntegrationTest extends AbstractIntegrationTest {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.status").value("CANCELED"));
 
-		// com a vaga livre, a nova candidatura passa
+		// with the slot free, the new application goes through
 		mockMvc.perform(post("/api/adoptions/applications")
 						.header("Authorization", bearer(adopter))
 						.contentType(MediaType.APPLICATION_JSON)
@@ -156,52 +156,52 @@ class AdoptionFlowIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("aprovar move o pet para adotado e recusa os demais candidatos")
+	@DisplayName("approving moves the pet to adopted and rejects the other applicants")
 	void approvingClosesTheCycle() throws Exception {
-		String tutor = tokenFor("tutor-e@example.com");
-		long petId = createPet(tutor, "Disputado");
+		String guardian = tokenFor("guardian-e@example.com");
+		long petId = createPet(guardian, "Disputado");
 
 		String escolhida = tokenFor("escolhida@example.com");
 		saveAdopterProfile(escolhida);
-		long aprovada = apply(escolhida, petId);
+		long approved = apply(escolhida, petId);
 
 		String preterida = tokenFor("preterida@example.com");
 		saveAdopterProfile(preterida);
 		long recusada = apply(preterida, petId);
 
-		mockMvc.perform(post("/api/adoptions/applications/" + aprovada + "/approve")
-						.header("Authorization", bearer(tutor))
+		mockMvc.perform(post("/api/adoptions/applications/" + approved + "/approve")
+						.header("Authorization", bearer(guardian))
 						.contentType(MediaType.APPLICATION_JSON)
-						.content(body(Map.of("note", "Perfil combina muito"))))
+						.content(body(Map.of("note", "The profile is a strong fit"))))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.status").value("APPROVED"))
 				.andExpect(jsonPath("$.decidedAt").exists());
 
-		// o pet sai do catálogo de disponíveis
+		// the pet leaves the available catalogue
 		mockMvc.perform(get("/api/pets/" + petId))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.status").value("ADOPTED"));
 
-		// e ninguém fica esperando resposta que não virá
+		// and nobody is left waiting for an answer that will not come
 		mockMvc.perform(get("/api/adoptions/applications/" + recusada)
 						.header("Authorization", bearer(preterida)))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.status").value("REJECTED"))
-				.andExpect(jsonPath("$.decisionNote").value("Outra candidatura foi aprovada para este pet."));
+				.andExpect(jsonPath("$.decisionNote").value("Another application was approved for this pet."));
 	}
 
 	@Test
-	@DisplayName("pet já adotado não recebe novas candidaturas")
+	@DisplayName("an already-adopted pet takes no new applications")
 	void adoptedPetAcceptsNoMoreApplications() throws Exception {
-		String tutor = tokenFor("tutor-f@example.com");
-		long petId = createPet(tutor, "Já Foi");
+		String guardian = tokenFor("guardian-f@example.com");
+		long petId = createPet(guardian, "Already Gone");
 
 		String primeira = tokenFor("primeira-f@example.com");
 		saveAdopterProfile(primeira);
 		long applicationId = apply(primeira, petId);
 
 		mockMvc.perform(post("/api/adoptions/applications/" + applicationId + "/approve")
-						.header("Authorization", bearer(tutor)))
+						.header("Authorization", bearer(guardian)))
 				.andExpect(status().isOk());
 
 		String atrasada = tokenFor("atrasada-f@example.com");
@@ -215,76 +215,76 @@ class AdoptionFlowIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("candidatura já decidida não é decidida de novo")
+	@DisplayName("an already-decided application is not decided again")
 	void decidedApplicationIsFinal() throws Exception {
-		String tutor = tokenFor("tutor-g@example.com");
-		long petId = createPet(tutor, "Decidido");
+		String guardian = tokenFor("guardian-g@example.com");
+		long petId = createPet(guardian, "Decidido");
 		String adopter = tokenFor("candidata-g@example.com");
 		saveAdopterProfile(adopter);
 		long applicationId = apply(adopter, petId);
 
 		mockMvc.perform(post("/api/adoptions/applications/" + applicationId + "/reject")
-						.header("Authorization", bearer(tutor)))
+						.header("Authorization", bearer(guardian)))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.status").value("REJECTED"));
 
 		mockMvc.perform(post("/api/adoptions/applications/" + applicationId + "/approve")
-						.header("Authorization", bearer(tutor)))
+						.header("Authorization", bearer(guardian)))
 				.andExpect(status().isConflict());
 	}
 
 	@Test
-	@DisplayName("quem não administra o pet não decide nem enxerga as candidaturas dele")
+	@DisplayName("someone who does not manage the pet neither decides nor sees its applications")
 	void onlyPetManagerDecides() throws Exception {
-		String tutor = tokenFor("tutor-h@example.com");
-		long petId = createPet(tutor, "Protegido");
+		String guardian = tokenFor("guardian-h@example.com");
+		long petId = createPet(guardian, "Protegido");
 		String adopter = tokenFor("candidata-h@example.com");
 		saveAdopterProfile(adopter);
 		long applicationId = apply(adopter, petId);
 
-		String estranho = tokenFor("estranho-h@example.com");
+		String stranger = tokenFor("stranger-h@example.com");
 
 		mockMvc.perform(post("/api/adoptions/applications/" + applicationId + "/approve")
-						.header("Authorization", bearer(estranho)))
+						.header("Authorization", bearer(stranger)))
 				.andExpect(status().isForbidden());
 
 		mockMvc.perform(get("/api/pets/" + petId + "/applications")
-						.header("Authorization", bearer(estranho)))
+						.header("Authorization", bearer(stranger)))
 				.andExpect(status().isForbidden());
 
 		mockMvc.perform(get("/api/pets/" + petId + "/applications")
-						.header("Authorization", bearer(tutor)))
+						.header("Authorization", bearer(guardian)))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.totalElements").value(1));
 	}
 
 	@Test
-	@DisplayName("só quem se candidatou pode desistir da candidatura")
+	@DisplayName("only the applicant can withdraw the application")
 	void onlyAdopterCancels() throws Exception {
-		String tutor = tokenFor("tutor-i@example.com");
-		long petId = createPet(tutor, "Cancelável");
+		String guardian = tokenFor("guardian-i@example.com");
+		long petId = createPet(guardian, "Cancellable");
 		String adopter = tokenFor("candidata-i@example.com");
 		saveAdopterProfile(adopter);
 		long applicationId = apply(adopter, petId);
 
 		mockMvc.perform(post("/api/adoptions/applications/" + applicationId + "/cancel")
-						.header("Authorization", bearer(tutor)))
+						.header("Authorization", bearer(guardian)))
 				.andExpect(status().isForbidden());
 	}
 
 	@Test
-	@DisplayName("candidatura alheia não é visível para terceiros")
+	@DisplayName("someone else's application is not visible to third parties")
 	void applicationIsPrivateToThePartiesInvolved() throws Exception {
-		String tutor = tokenFor("tutor-j@example.com");
-		long petId = createPet(tutor, "Reservado");
+		String guardian = tokenFor("guardian-j@example.com");
+		long petId = createPet(guardian, "Reserved");
 		String adopter = tokenFor("candidata-j@example.com");
 		saveAdopterProfile(adopter);
 		long applicationId = apply(adopter, petId);
 
-		String estranho = tokenFor("bisbilhoteiro@example.com");
+		String stranger = tokenFor("bisbilhoteiro@example.com");
 
 		mockMvc.perform(get("/api/adoptions/applications/" + applicationId)
-						.header("Authorization", bearer(estranho)))
+						.header("Authorization", bearer(stranger)))
 				.andExpect(status().isForbidden());
 
 		mockMvc.perform(get("/api/adoptions/applications/" + applicationId)
@@ -301,7 +301,7 @@ class AdoptionFlowIntegrationTest extends AbstractIntegrationTest {
 				.andExpect(status().isUnauthorized());
 	}
 
-	// ----------------------------------------------------------------- apoio --
+	// --------------------------------------------------------------- helpers --
 
 	private long apply(String adopterToken, long petId) throws Exception {
 		String response = mockMvc.perform(post("/api/adoptions/applications")

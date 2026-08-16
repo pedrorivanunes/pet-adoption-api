@@ -7,7 +7,7 @@ public enum PetStatus {
 	LOST,
 	DECEASED;
 
-	/** Estado terminal: não há transição de volta a partir dele. */
+	/** A terminal state: there is no transition back out of it. */
 	public boolean isTerminal() {
 		return this == DECEASED;
 	}

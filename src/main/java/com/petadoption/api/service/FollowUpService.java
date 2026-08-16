@@ -21,7 +21,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Acompanhamento pós-adoção: registro de contatos e o relatório do período.
+ * Post-adoption follow-up: logging contacts and reporting on the period.
  */
 @Service
 public class FollowUpService {
@@ -45,12 +45,11 @@ public class FollowUpService {
 	}
 
 	/**
-	 * Relatório do acompanhamento.
+	 * The follow-up report.
 	 *
-	 * @param monthsWithoutContact meses da janela sem nenhum contato registrado —
-	 *                             é a informação que denuncia acompanhamento que
-	 *                             parou pela metade, coisa que uma contagem total
-	 *                             de visitas esconde
+	 * @param monthsWithoutContact months of the window with no contact logged --
+	 *                             this is what exposes a follow-up that stopped
+	 *                             halfway, something a total visit count hides
 	 */
 	public record Report(
 			Adoption adoption,
@@ -69,11 +68,11 @@ public class FollowUpService {
 		requireResponsible(adoption, actor);
 
 		if (data.occurredOn().isBefore(adoption.getAdoptedOn())) {
-			throw new ConflictException("O contato não pode ser anterior à data da adoção ("
+			throw new ConflictException("The contact cannot predate the adoption date ("
 					+ adoption.getAdoptedOn() + ").");
 		}
 		if (data.occurredOn().isAfter(LocalDate.now())) {
-			throw new ConflictException("O contato não pode estar no futuro.");
+			throw new ConflictException("The contact cannot be in the future.");
 		}
 
 		AdoptionFollowUp followUp = new AdoptionFollowUp();
@@ -97,8 +96,8 @@ public class FollowUpService {
 		List<AdoptionFollowUp> interactions =
 				followUps.findByAdoption_IdOrderByOccurredOnAscIdAsc(adoption.getId());
 
-		// A ficha de saúde é do animal para a vida toda; o relatório recorta
-		// apenas a janela de acompanhamento.
+		// The health record covers the animal's whole life; the report crops it
+		// to the follow-up window only.
 		List<PetHealthRecord> health = healthRecords
 				.findByPet_IdAndOccurredOnBetweenOrderByOccurredOnAsc(
 						adoption.getPet().getId(), adoptedOn, windowEndsOn);
@@ -113,12 +112,12 @@ public class FollowUpService {
 				monthsWithoutContact(adoptedOn, windowEndsOn, today, interactions));
 	}
 
-	// ======================================================== apoio ==========
+	// ======================================================= helpers =========
 
 	/**
-	 * Meses já decorridos da janela em que não houve nenhum contato. Meses que
-	 * ainda não chegaram não contam como falha — não se cobra acompanhamento do
-	 * futuro.
+	 * Months of the window that have already passed with no contact at all.
+	 * Months that have not arrived yet do not count as a failure -- nobody owes
+	 * follow-up for the future.
 	 */
 	private List<YearMonth> monthsWithoutContact(LocalDate adoptedOn, LocalDate windowEndsOn, LocalDate today,
 			List<AdoptionFollowUp> interactions) {
@@ -141,27 +140,28 @@ public class FollowUpService {
 	private Adoption findByPet(Long petId) {
 		return adoptions.findFirstByPet_IdOrderByAdoptedOnDescIdDesc(petId)
 				.orElseThrow(() -> new NotFoundException(
-						"Este pet não tem adoção registrada, então não há acompanhamento."));
+						"This pet has no adoption on record, so there is no follow-up."));
 	}
 
 	/**
-	 * O dever de acompanhar é de quem entregou o animal — o abrigo ou o tutor
-	 * anterior. Depois da adoção a tutoria passa ao adotante, então a permissão
-	 * de registrar não pode vir de administrar o pet: seria dar ao adotante a
-	 * caneta para atestar o próprio acompanhamento.
+	 * The duty to follow up belongs to whoever handed the animal over -- the
+	 * shelter or the previous guardian. After the adoption, guardianship passes
+	 * to the adopter, so permission to log contacts cannot come from managing
+	 * the pet: that would hand the adopter the pen to certify their own
+	 * follow-up.
 	 */
 	private void requireResponsible(Adoption adoption, User actor) {
 		if (!isResponsible(adoption, actor)) {
 			throw new AccessDeniedException(
-					"O acompanhamento é responsabilidade de quem entregou o animal");
+					"The follow-up is the responsibility of whoever handed the animal over");
 		}
 	}
 
-	/** Ler o relatório cabe também ao adotante: é sobre ele e sobre o animal dele. */
+	/** Reading the report is also the adopter's right: it is about them and their animal. */
 	private void requireParticipant(Adoption adoption, User actor) {
 		boolean isAdopter = adoption.getAdopter().getId().equals(actor.getId());
 		if (!isAdopter && !isResponsible(adoption, actor)) {
-			throw new AccessDeniedException("Este acompanhamento não é seu");
+			throw new AccessDeniedException("This follow-up is not yours");
 		}
 	}
 

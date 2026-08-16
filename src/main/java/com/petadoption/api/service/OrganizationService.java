@@ -35,10 +35,11 @@ public class OrganizationService {
 	}
 
 	/**
-	 * Cria a organização e vincula quem criou como ADMIN, na mesma transação.
+	 * Creates the organization and links its creator as ADMIN, in one
+	 * transaction.
 	 *
-	 * <p>Se o vínculo falhasse depois de a organização já existir, ela ficaria
-	 * órfã: sem nenhum administrador, ninguém conseguiria editá-la nem apagá-la.
+	 * <p>If the membership failed after the organization already existed, it
+	 * would be orphaned: with no administrator, nobody could edit or delete it.
 	 */
 	@Transactional
 	public Organization create(OrganizationData data, String actorEmail) {
@@ -59,7 +60,7 @@ public class OrganizationService {
 
 	@Transactional(readOnly = true)
 	public Organization getById(Long id) {
-		return organizations.findById(id).orElseThrow(() -> NotFoundException.of("Organização", id));
+		return organizations.findById(id).orElseThrow(() -> NotFoundException.of("Organization", id));
 	}
 
 	@Transactional(readOnly = true)
@@ -81,13 +82,14 @@ public class OrganizationService {
 		Organization organization = getById(id);
 		access.requireAdmin(id, users.getByEmail(actorEmail));
 
-		// Pets da organização apontam para ela com ON DELETE RESTRICT, então o
-		// banco recusa apagar uma organização que ainda tem animais. Detectar
-		// aqui devolve uma mensagem útil em vez de um erro de constraint cru.
+		// The organization's pets point at it with ON DELETE RESTRICT, so the
+		// database refuses to delete an organization that still has animals.
+		// Catching it here returns a useful message instead of a raw constraint
+		// error.
 		organizations.delete(organization);
 	}
 
-	// ======================================================= membros =========
+	// ======================================================= members =========
 
 	@Transactional(readOnly = true)
 	public List<OrganizationMembership> listMembers(Long organizationId, String actorEmail) {
@@ -106,8 +108,8 @@ public class OrganizationService {
 
 		User member = users.getByEmail(memberEmail);
 		memberships.findByOrganization_IdAndUser_Id(organizationId, member.getId()).ifPresent(existing -> {
-			throw new ConflictException("Esta pessoa já faz parte da organização. "
-					+ "Para trocar o papel dela, atualize o vínculo existente.");
+			throw new ConflictException("This person is already a member of the organization. "
+					+ "To change their role, update the existing membership.");
 		});
 
 		OrganizationMembership membership = new OrganizationMembership();
@@ -144,23 +146,23 @@ public class OrganizationService {
 		memberships.delete(membership);
 	}
 
-	// ======================================================== apoio ==========
+	// ======================================================= helpers =========
 
 	private OrganizationMembership findMembership(Long organizationId, Long memberUserId) {
 		return memberships.findByOrganization_IdAndUser_Id(organizationId, memberUserId)
-				.orElseThrow(() -> NotFoundException.of("Vínculo com a organização", memberUserId));
+				.orElseThrow(() -> NotFoundException.of("Organization membership", memberUserId));
 	}
 
 	/**
-	 * Impede que a organização fique sem nenhum administrador. Sem esta regra,
-	 * o último ADMIN pode se rebaixar ou se remover e trancar todo mundo do
-	 * lado de fora — a organização passa a existir sem ninguém que possa
-	 * administrá-la, e não há caminho de volta pela própria API.
+	 * Stops the organization from ending up with no administrator at all.
+	 * Without this rule, the last ADMIN could demote or remove themselves and
+	 * lock everyone out -- the organization would go on existing with nobody
+	 * able to administer it, and there is no way back through the API itself.
 	 */
 	private void requireAnotherAdminExists(Long organizationId) {
 		if (memberships.countByOrganization_IdAndMemberRole(organizationId, OrgMemberRole.ADMIN) <= 1) {
 			throw new ConflictException(
-					"Esta organização ficaria sem administrador. Promova outra pessoa a ADMIN antes.");
+					"This organization would be left with no administrator. Promote someone else to ADMIN first.");
 		}
 	}
 

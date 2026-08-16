@@ -12,22 +12,22 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tabela de casos do cálculo de compatibilidade.
+ * A table of cases for the compatibility calculation.
  *
- * <p>Sem Spring e sem banco: o calculador é uma função pura, e é assim que ele
- * é exercitado. Regra densa como esta muda com frequência — cada caso aqui é um
- * contrato do que a mudança não pode quebrar.
+ * <p>No Spring and no database: the calculator is a pure function, and that is
+ * how it is exercised. A dense rule like this one changes often -- each case
+ * here is a contract on what the change must not break.
  */
 class CompatibilityCalculatorTest {
 
 	private final CompatibilityCalculator calculator = new CompatibilityCalculator();
 
 	@Nested
-	@DisplayName("pontuação por característica")
+	@DisplayName("scoring by characteristic")
 	class Characteristics {
 
 		@Test
-		@DisplayName("par perfeito soma todos os fatores positivos")
+		@DisplayName("a perfect match adds up every positive factor")
 		void perfectMatch() {
 			Pet pet = healthyPet();
 			pet.setSpecies("DOG");
@@ -41,12 +41,12 @@ class CompatibilityCalculatorTest {
 			profile.setPreferredSize(PetSize.MEDIUM);
 			profile.setPreferredSex(PetSex.FEMALE);
 
-			// 20 espécie + 10 raça + 10 porte + 5 sexo + 10 saudável + 5 sem crônica
+			// 20 species + 10 breed + 10 size + 5 sex + 10 healthy + 5 no chronic illness
 			assertThat(calculator.evaluate(pet, profile).score()).isEqualTo(60);
 		}
 
 		@Test
-		@DisplayName("espécie diferente da desejada subtrai 20")
+		@DisplayName("a species other than the one wanted subtracts 20")
 		void wrongSpeciesSubtracts() {
 			Pet pet = healthyPet();
 			pet.setSpecies("CAT");
@@ -54,19 +54,19 @@ class CompatibilityCalculatorTest {
 			AdopterProfile profile = strictProfile();
 			profile.setPreferredSpecies("DOG");
 
-			// -20 espécie + 10 saudável + 5 sem crônica
+			// -20 species + 10 healthy + 5 no chronic illness
 			assertThat(calculator.evaluate(pet, profile).score()).isEqualTo(-5);
 		}
 
 		@Test
-		@DisplayName("preferência não declarada não pontua nem penaliza")
+		@DisplayName("an undeclared preference neither scores nor penalises")
 		void silenceIsNotDisagreement() {
 			Pet pet = healthyPet();
 			pet.setSpecies("CAT");
 			pet.setSize(PetSize.LARGE);
 			pet.setSex(PetSex.MALE);
 
-			// perfil sem nenhuma preferência declarada
+			// a profile with no stated preference at all
 			AdopterProfile profile = strictProfile();
 
 			CompatibilityResult result = calculator.evaluate(pet, profile);
@@ -74,12 +74,12 @@ class CompatibilityCalculatorTest {
 			assertThat(result.factors())
 					.extracting(CompatibilityResult.Factor::category)
 					.doesNotContain("SPECIES", "SIZE", "SEX", "BREED");
-			// sobram apenas os dois fatores de saúde
+			// only the two health factors remain
 			assertThat(result.score()).isEqualTo(15);
 		}
 
 		@Test
-		@DisplayName("raça não informada no pet não conta contra ele")
+		@DisplayName("a breed missing from the pet does not count against it")
 		void unknownBreedIsNotPenalized() {
 			Pet pet = healthyPet();
 			pet.setBreed(null);
@@ -94,11 +94,11 @@ class CompatibilityCalculatorTest {
 	}
 
 	@Nested
-	@DisplayName("fatores de saúde")
+	@DisplayName("health factors")
 	class Health {
 
 		@Test
-		@DisplayName("animal com necessidades especiais e adotante que aceita somam 10")
+		@DisplayName("an animal with special needs and an adopter who accepts add 10")
 		void specialNeedsAccepted() {
 			Pet pet = healthyPet();
 			pet.setHasSpecialNeeds(true);
@@ -110,7 +110,7 @@ class CompatibilityCalculatorTest {
 		}
 
 		@Test
-		@DisplayName("animal com tratamento contínuo e adotante que não aceita subtraem 10")
+		@DisplayName("an animal on continuous treatment and an adopter who declines subtract 10")
 		void continuousTreatmentDeclined() {
 			Pet pet = healthyPet();
 			pet.setHasContinuousTreatment(true);
@@ -121,7 +121,7 @@ class CompatibilityCalculatorTest {
 		}
 
 		@Test
-		@DisplayName("animal saudável vale mais para quem procura exatamente isso")
+		@DisplayName("a healthy animal is worth more to someone looking for exactly that")
 		void healthyPetIsWorthMoreToStrictAdopter() {
 			Pet pet = healthyPet();
 
@@ -133,7 +133,7 @@ class CompatibilityCalculatorTest {
 		}
 
 		@Test
-		@DisplayName("doença crônica aceita soma 10; recusada subtrai 10")
+		@DisplayName("an accepted chronic illness adds 10; a declined one subtracts 10")
 		void chronicDisease() {
 			Pet sick = healthyPet();
 			sick.setHasChronicDisease(true);
@@ -147,11 +147,11 @@ class CompatibilityCalculatorTest {
 	}
 
 	@Nested
-	@DisplayName("fatores impeditivos")
+	@DisplayName("blocking factors")
 	class BlockingFactors {
 
 		@Test
-		@DisplayName("animal que não convive com outros elimina quem já tem animais")
+		@DisplayName("an animal that does not get along eliminates someone who already has animals")
 		void doesNotGetAlongWithOtherAnimals() {
 			Pet pet = healthyPet();
 			pet.setGoodWithOtherAnimals(false);
@@ -163,11 +163,11 @@ class CompatibilityCalculatorTest {
 
 			assertThat(result.blocked()).isTrue();
 			assertThat(result.blockers()).singleElement().asString()
-					.contains("não se adapta à convivência");
+					.contains("does not get along with other animals");
 		}
 
 		@Test
-		@DisplayName("convivência desconhecida não elimina ninguém")
+		@DisplayName("unknown sociability eliminates nobody")
 		void unknownSociabilityDoesNotBlock() {
 			Pet pet = healthyPet();
 			pet.setGoodWithOtherAnimals(null);
@@ -179,7 +179,7 @@ class CompatibilityCalculatorTest {
 		}
 
 		@Test
-		@DisplayName("animal que não convive é indiferente para quem não tem animais")
+		@DisplayName("an unsociable animal is irrelevant to someone with no animals")
 		void unsociablePetIsFineForAdopterWithoutPets() {
 			Pet pet = healthyPet();
 			pet.setGoodWithOtherAnimals(false);
@@ -188,7 +188,7 @@ class CompatibilityCalculatorTest {
 		}
 
 		@Test
-		@DisplayName("cuidados constantes sem disponibilidade de tempo elimina")
+		@DisplayName("constant care with no time available eliminates")
 		void constantCareWithoutTime() {
 			Pet pet = healthyPet();
 			pet.setRequiresConstantCare(true);
@@ -199,11 +199,11 @@ class CompatibilityCalculatorTest {
 			CompatibilityResult result = calculator.evaluate(pet, profile);
 
 			assertThat(result.blocked()).isTrue();
-			assertThat(result.blockers()).singleElement().asString().contains("cuidados constantes");
+			assertThat(result.blockers()).singleElement().asString().contains("needs constant care");
 		}
 
 		@Test
-		@DisplayName("cuidados constantes com disponibilidade soma 5")
+		@DisplayName("constant care with time available adds 5")
 		void constantCareWithTime() {
 			Pet pet = healthyPet();
 			pet.setRequiresConstantCare(true);
@@ -215,7 +215,7 @@ class CompatibilityCalculatorTest {
 		}
 
 		@Test
-		@DisplayName("impeditivo não é pontuação baixa: elimina mesmo com score alto")
+		@DisplayName("a blocker is not a low score: it eliminates even with a high score")
 		void blockingIsNotAScore() {
 			Pet pet = healthyPet();
 			pet.setSpecies("DOG");
@@ -251,7 +251,7 @@ class CompatibilityCalculatorTest {
 	}
 
 	@Test
-	@DisplayName("todo fator vem com explicação legível")
+	@DisplayName("every factor comes with a readable explanation")
 	void everyFactorIsExplainable() {
 		Pet pet = healthyPet();
 		pet.setSpecies("DOG");
@@ -267,17 +267,17 @@ class CompatibilityCalculatorTest {
 				});
 	}
 
-	// ----------------------------------------------------------------- apoio --
+	// --------------------------------------------------------------- helpers --
 
-	/** Animal sem nenhuma condição de saúde e sem exigência de cuidado. */
+	/** An animal with no health condition and no care requirement. */
 	private static Pet healthyPet() {
 		Pet pet = new Pet();
-		pet.setName("Teste");
+		pet.setName("Test");
 		pet.setSpecies("DOG");
 		return pet;
 	}
 
-	/** Adotante que não aceita nenhuma condição especial e mora sozinho, sem pets. */
+	/** An adopter who accepts no special condition and lives alone, with no pets. */
 	private static AdopterProfile strictProfile() {
 		AdopterProfile profile = new AdopterProfile();
 		profile.setHousingType(HousingType.HOUSE);

@@ -18,11 +18,12 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.OffsetDateTime;
 
 /**
- * Vínculo entre uma pessoa e uma organização.
+ * The link between a person and an organization.
  *
- * <p>É a única fonte de autorização sobre os recursos de uma organização. O
- * banco impõe unicidade por (organização, usuário): promover alguém de STAFF
- * para ADMIN é atualizar o papel desta linha, não criar uma segunda.
+ * <p>It is the only source of authorization over an organization's resources.
+ * The database enforces uniqueness on (organization, user): promoting someone
+ * from STAFF to ADMIN updates the role on this row rather than creating a
+ * second one.
  */
 @Entity
 @Table(name = "organization_memberships")

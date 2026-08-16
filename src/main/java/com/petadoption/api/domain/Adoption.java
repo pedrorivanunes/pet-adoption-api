@@ -18,8 +18,8 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
 /**
- * Adoção efetivada. Registro histórico, criado quando uma candidatura é
- * aprovada — e é da data daqui que se conta o acompanhamento pós-adoção.
+ * A completed adoption. A historical record, created when an application is
+ * approved -- and the date here is what the post-adoption follow-up counts from.
  */
 @Entity
 @Table(name = "adoptions")
@@ -43,9 +43,9 @@ public class Adoption {
 	@JoinColumn(name = "adopter_user_id", nullable = false)
 	private User adopter;
 
-	// Quem entregou o animal. A tutoria passa para o adotante na aprovação, e
-	// sem este registro se perderia quem tem o dever de acompanhar os seis
-	// meses seguintes. Exatamente um dos dois é preenchido.
+	// Who handed the animal over. Guardianship passes to the adopter on
+	// approval, and without this record we would lose track of who owes the
+	// follow-up over the next six months. Exactly one of the two is set.
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "origin_user_id")
 	private User originUser;
@@ -57,7 +57,7 @@ public class Adoption {
 	@Column(name = "adopted_on", nullable = false)
 	private LocalDate adoptedOn;
 
-	/** Fim do período mínimo de acompanhamento previsto no domínio. */
+	/** End of the minimum follow-up period the domain requires. */
 	public LocalDate followUpDeadline() {
 		return adoptedOn.plusMonths(FOLLOW_UP_MONTHS);
 	}

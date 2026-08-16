@@ -5,9 +5,9 @@ import jakarta.validation.constraints.Size;
 
 public record CreateApplicationRequest(
 
-		@NotNull(message = "petId é obrigatório")
+		@NotNull(message = "petId is required")
 		Long petId,
 
-		@Size(max = 1000, message = "mensagem deve ter no máximo 1000 caracteres")
+		@Size(max = 1000, message = "message must be at most 1000 characters")
 		String message) {
 }

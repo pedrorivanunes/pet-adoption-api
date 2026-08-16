@@ -30,9 +30,9 @@ public class AppUserDetailsService implements UserDetailsService {
 		com.petadoption.api.domain.User user = users.findByEmail(normalized)
 				.orElseThrow(() -> new UsernameNotFoundException("Credenciais inválidas"));
 
-		// O nome do papel vira a autoridade sem qualquer transformação. Esta é
-		// a única tradução domínio -> Spring Security no sistema, e ela é a
-		// identidade de propósito.
+		// The role name becomes the authority with no transformation at all.
+		// This is the only domain -> Spring Security translation in the system,
+		// and it is the identity function on purpose.
 		List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
 				.map(Role::getName)
 				.map(SimpleGrantedAuthority::new)

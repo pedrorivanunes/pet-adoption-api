@@ -1,18 +1,18 @@
 package com.petadoption.api.domain;
 
-/** Natureza de uma permanência na linha do tempo do animal. */
+/** The nature of one stay on the animal's timeline. */
 public enum StayKind {
 
-	/** Resgate — em geral o primeiro registro, com data anterior ao cadastro. */
+	/** Rescue -- usually the first record, dated before the pet was registered. */
 	RESCUE,
 
-	/** Abrigo ou ONG. */
+	/** A shelter or animal welfare organization. */
 	SHELTER,
 
-	/** Lar temporário. */
+	/** A foster home. */
 	FOSTER,
 
-	/** Lar definitivo, aberto quando uma adoção é aprovada. */
+	/** A permanent home, opened when an adoption is approved. */
 	ADOPTION,
 
 	OTHER

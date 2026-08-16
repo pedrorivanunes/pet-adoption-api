@@ -26,11 +26,11 @@ public class UserController {
 	}
 
 	/**
-	 * Dados do usuário autenticado.
+	 * The authenticated user's own data.
 	 *
-	 * <p>A identidade vem do subject do token, nunca de um id recebido do
-	 * cliente: é o que impede que trocar um número na URL leia o cadastro de
-	 * outra pessoa.
+	 * <p>The identity comes from the token's subject, never from an id supplied
+	 * by the client: that is what stops changing a number in the URL from reading
+	 * somebody else's record.
 	 */
 	@GetMapping("/me")
 	public UserResponse me(@AuthenticationPrincipal Jwt jwt) {
@@ -38,12 +38,12 @@ public class UserController {
 	}
 
 	/**
-	 * Pets de quem está autenticado.
+	 * The authenticated person's pets.
 	 *
-	 * <p>Fica sob {@code /api/users/me/} de propósito, e não em
-	 * {@code /api/pets/me}: o catálogo de pets é público, e uma rota pessoal
-	 * pendurada debaixo dele acabaria liberada junto por qualquer regra de
-	 * segurança com curinga.
+	 * <p>It sits under {@code /api/users/me/} on purpose, and not at
+	 * {@code /api/pets/me}: the pet catalogue is public, and a personal route
+	 * hanging beneath it would end up exposed along with it by any wildcard
+	 * security rule.
 	 */
 	@GetMapping("/me/pets")
 	public PageResponse<PetResponse> myPets(@AuthenticationPrincipal Jwt jwt,

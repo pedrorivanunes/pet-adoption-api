@@ -1,8 +1,8 @@
 package com.petadoption.api.service;
 
 /**
- * Regra de negócio violada por conflito com o estado atual — o pedido é válido
- * em forma, mas não pode ser atendido agora. Vira 409 na borda web.
+ * A business rule violated by a conflict with the current state -- the request
+ * is well-formed, but cannot be served right now. Becomes a 409 at the web edge.
  */
 public class ConflictException extends RuntimeException {
 

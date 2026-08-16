@@ -1,14 +1,14 @@
 -- =========================================================================
--- V4 -- Retrato da compatibilidade no momento da candidatura.
+-- V4 -- A snapshot of compatibility at the moment of application.
 --
--- O score fica gravado na candidatura em vez de ser recalculado a cada
--- leitura: é o valor que existia quando a pessoa se candidatou. Se ela editar
--- as preferências amanhã, ou o abrigo corrigir os dados de saúde do animal, o
--- histórico não deve mudar retroativamente -- quem decidiu decidiu com base no
--- que estava na tela naquele dia.
+-- The score is stored on the application instead of being recomputed on every
+-- read: it is the value that existed when the person applied. If they edit
+-- their preferences tomorrow, or the shelter corrects the animal's health data,
+-- the history should not change retroactively -- whoever decided, decided based
+-- on what was on the screen that day.
 --
--- A busca "quero adotar" é outra coisa: ali o cálculo é ao vivo, porque o
--- objetivo é refletir o estado atual do catálogo.
+-- The "I want to adopt" search is a different thing: there the calculation is
+-- live, because the goal is to reflect the current state of the catalogue.
 -- =========================================================================
 
 ALTER TABLE adoption_applications
@@ -17,12 +17,12 @@ ALTER TABLE adoption_applications
 ALTER TABLE adoption_applications
     ADD COLUMN has_blocking_factor BOOLEAN NOT NULL DEFAULT false;
 
--- Candidatura com fator impeditivo não é recusada automaticamente: fica
--- registrada e sinalizada, para quem cuida do animal decidir com a informação
--- à vista. Pode haver contexto que o cadastro não captura.
+-- An application with a blocker is not rejected automatically: it is recorded
+-- and flagged, so whoever cares for the animal decides with the information in
+-- plain sight. There may be context the records do not capture.
 COMMENT ON COLUMN adoption_applications.has_blocking_factor IS
-    'Havia fator impeditivo quando a candidatura foi feita';
+    'A blocking factor was present when the application was made';
 
--- O relatório de compatibilidade ordena as candidaturas de um pet por score.
+-- The compatibility report orders a pet's applications by score.
 CREATE INDEX idx_applications_pet_score
     ON adoption_applications (pet_id, compatibility_score DESC);

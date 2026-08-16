@@ -12,8 +12,8 @@ public interface OrganizationMembershipRepository extends JpaRepository<Organiza
 
 	Optional<OrganizationMembership> findByOrganization_IdAndUser_Id(Long organizationId, Long userId);
 
-	// A listagem expõe nome e e-mail de cada membro, então o usuário vem junto
-	// na mesma consulta em vez de uma por linha.
+	// The listing exposes each member's name and email, so the user is fetched
+	// in the same query instead of one query per row.
 	@EntityGraph(attributePaths = { "user" })
 	List<OrganizationMembership> findByOrganization_IdOrderByCreatedAtAsc(Long organizationId);
 

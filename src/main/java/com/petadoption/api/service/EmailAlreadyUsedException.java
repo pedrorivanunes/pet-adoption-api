@@ -1,9 +1,9 @@
 package com.petadoption.api.service;
 
-/** Lançada quando já existe conta para o e-mail informado no cadastro. */
+/** Thrown when an account already exists for the email given at registration. */
 public class EmailAlreadyUsedException extends ConflictException {
 
 	public EmailAlreadyUsedException(String email) {
-		super("Já existe uma conta com o e-mail " + email);
+		super("An account already exists for the email " + email);
 	}
 }

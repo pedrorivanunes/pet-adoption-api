@@ -48,37 +48,38 @@ public class AdoptionApplicationService {
 	}
 
 	/**
-	 * Registra a candidatura de quem está autenticado a um pet.
+	 * Records the authenticated person's application for a pet.
 	 *
-	 * <p>As quatro condições verificadas aqui são regras de negócio de verdade,
-	 * não validação de formulário: cada uma tem um motivo que o cliente precisa
-	 * entender pela mensagem.
+	 * <p>The four conditions checked here are real business rules, not form
+	 * validation: each one has a reason the client needs to understand from the
+	 * message.
 	 */
 	@Transactional
 	public AdoptionApplication apply(Long petId, String message, String actorEmail) {
 		User actor = users.getByEmail(actorEmail);
 		Pet pet = pets.findById(petId).orElseThrow(() -> NotFoundException.of("Pet", petId));
 
-		// 1. Sem perfil não há como avaliar compatibilidade nem conversar sobre
-		//    a adoção — e é o perfil que alimenta o ranqueamento.
+		// 1. Without a profile there is no way to assess compatibility or to
+		//    discuss the adoption -- and the profile is what feeds the ranking.
 		AdopterProfile profile = profiles.findOf(actor).orElseThrow(() -> new ConflictException(
-				"Preencha seu perfil de adotante antes de se candidatar."));
+				"Preencha seu perfil de adopter antes de se candidatar."));
 
-		// 2. Quem cuida do pet não se candidata a ele: aprovaria a si mesmo.
+		// 2. Whoever manages the pet does not apply for it: they would be
+		//    approving themselves.
 		if (petAccess.canManage(pet, actor)) {
-			throw new ConflictException("Você já é responsável por este pet.");
+			throw new ConflictException("You are already responsible for this pet.");
 		}
 
-		// 3. Pet perdido, falecido ou já adotado não recebe candidatura.
+		// 3. A lost, deceased or already adopted pet takes no applications.
 		if (pet.getStatus() != PetStatus.AVAILABLE) {
-			throw new ConflictException("Este pet não está disponível para adoção.");
+			throw new ConflictException("This pet is not available for adoption.");
 		}
 
-		// 4. Um pet por vez. O índice único parcial no banco é quem garante de
-		//    fato; esta checagem existe para a mensagem ser compreensível.
+		// 4. One pet at a time. The partial unique index in the database is what
+		//    actually guarantees it; this check exists so the message is clear.
 		if (applications.existsByAdopter_IdAndStatus(actor.getId(), ApplicationStatus.PENDING)) {
 			throw new ConflictException(
-					"Você já tem uma candidatura em andamento. Cancele-a antes de se candidatar a outro pet.");
+					"You already have an application in progress. Cancel it before applying for another pet.");
 		}
 
 		AdoptionApplication application = new AdoptionApplication();
@@ -86,10 +87,10 @@ public class AdoptionApplicationService {
 		application.setAdopter(actor);
 		application.setMessage(message);
 
-		// Compatibilidade gravada como retrato do momento. Candidatura com
-		// fator impeditivo não é recusada automaticamente: fica registrada e
-		// sinalizada, porque pode haver contexto que o cadastro não captura, e
-		// a decisão é de quem cuida do animal.
+		// Compatibility stored as a snapshot of this moment. An application with
+		// a blocker is not rejected automatically: it is recorded and flagged,
+		// because there may be context the records do not capture, and the
+		// decision belongs to whoever cares for the animal.
 		CompatibilityResult compatibility = calculator.evaluate(pet, profile);
 		application.setCompatibilityScore(compatibility.score());
 		application.setHasBlockingFactor(compatibility.blocked());
@@ -103,7 +104,7 @@ public class AdoptionApplicationService {
 		return applications.findByAdopter_IdOrderByCreatedAtDesc(actor.getId(), pageable);
 	}
 
-	/** Candidaturas recebidas por um pet — visível a quem o administra. */
+	/** Applications received for a pet -- visible to whoever manages it. */
 	@Transactional(readOnly = true)
 	public Page<AdoptionApplication> listForPet(Long petId, String actorEmail, Pageable pageable) {
 		Pet pet = pets.findById(petId).orElseThrow(() -> NotFoundException.of("Pet", petId));
@@ -112,7 +113,7 @@ public class AdoptionApplicationService {
 		return applications.findByPet_Id(petId, pageable);
 	}
 
-	/** Visível ao candidato e a quem administra o pet — a ninguém mais. */
+	/** Visible to the applicant and to whoever manages the pet -- nobody else. */
 	@Transactional(readOnly = true)
 	public AdoptionApplication getById(Long id, String actorEmail) {
 		AdoptionApplication application = find(id);
@@ -120,20 +121,20 @@ public class AdoptionApplicationService {
 
 		boolean isAdopter = application.getAdopter().getId().equals(actor.getId());
 		if (!isAdopter && !petAccess.canManage(application.getPet(), actor)) {
-			throw new AccessDeniedException("Esta candidatura não é sua nem de um pet que você administra");
+			throw new AccessDeniedException("This application is neither yours nor for a pet you manage");
 		}
 
 		return application;
 	}
 
 	/**
-	 * Aprova a candidatura e fecha o ciclo do pet numa transação só: registra a
-	 * adoção, marca o pet como adotado e recusa as demais candidaturas
-	 * pendentes.
+	 * Approves the application and closes the pet's cycle in a single
+	 * transaction: records the adoption, marks the pet as adopted and rejects
+	 * the remaining pending applications.
 	 *
-	 * <p>Deixar essas três coisas para chamadas separadas abriria a janela em
-	 * que o pet aparece adotado enquanto outras pessoas ainda esperam resposta —
-	 * ou pior, duas aprovações para o mesmo animal.
+	 * <p>Leaving those three things to separate calls would open a window in
+	 * which the pet shows as adopted while other people are still waiting for an
+	 * answer -- or worse, two approvals for the same animal.
 	 */
 	@Transactional
 	public AdoptionApplication approve(Long id, String note, String actorEmail) {
@@ -154,22 +155,22 @@ public class AdoptionApplicationService {
 		adoption.setPet(pet);
 		adoption.setAdopter(adopter);
 		adoption.setAdoptedOn(today);
-		// A origem é capturada antes da transferência: depois dela o pet já
-		// aponta para o adotante, e quem entregou o animal — justamente quem
-		// tem o dever de acompanhar — teria se perdido.
+		// The origin is captured before the transfer: after it the pet already
+		// points at the adopter, and whoever handed the animal over -- precisely
+		// the party who owes the follow-up -- would have been lost.
 		adoption.setOriginUser(pet.getOwnerUser());
 		adoption.setOriginOrg(pet.getOwnerOrg());
 		adoptions.save(adoption);
 
-		// Adotar é virar tutor. Sem esta transferência, o abrigo continuaria
-		// figurando como dono de um animal que já não está com ele.
+		// Adopting means becoming the guardian. Without this transfer, the
+		// shelter would still show as the owner of an animal it no longer has.
 		pet.setStatus(PetStatus.ADOPTED);
 		pet.setOwnerUser(adopter);
 		pet.setOwnerOrg(null);
 		pets.save(pet);
 
 		history.openStay(pet, StayKind.ADOPTION, "Lar de " + adopter.getName(), today,
-				"Adoção aprovada", adopter, null);
+				"Adoption approved", adopter, null);
 
 		rejectRemainingCandidates(application, actor);
 
@@ -188,14 +189,14 @@ public class AdoptionApplicationService {
 		return applications.save(application);
 	}
 
-	/** Desistência do próprio candidato — libera a vaga dele para outro pet. */
+	/** The applicant withdrawing -- frees their slot up for another pet. */
 	@Transactional
 	public AdoptionApplication cancel(Long id, String actorEmail) {
 		AdoptionApplication application = find(id);
 		User actor = users.getByEmail(actorEmail);
 
 		if (!application.getAdopter().getId().equals(actor.getId())) {
-			throw new AccessDeniedException("Só quem se candidatou pode desistir da candidatura");
+			throw new AccessDeniedException("Only the applicant can withdraw the application");
 		}
 		requirePending(application);
 
@@ -203,7 +204,7 @@ public class AdoptionApplicationService {
 		return applications.save(application);
 	}
 
-	// ======================================================== apoio ==========
+	// ======================================================= helpers =========
 
 	private void rejectRemainingCandidates(AdoptionApplication approved, User decidedBy) {
 		List<AdoptionApplication> stillPending = applications
@@ -214,20 +215,20 @@ public class AdoptionApplicationService {
 				continue;
 			}
 			other.decide(ApplicationStatus.REJECTED, decidedBy,
-					"Outra candidatura foi aprovada para este pet.");
+					"Another application was approved for this pet.");
 		}
 
 		applications.saveAll(stillPending);
 	}
 
 	private AdoptionApplication find(Long id) {
-		return applications.findById(id).orElseThrow(() -> NotFoundException.of("Candidatura", id));
+		return applications.findById(id).orElseThrow(() -> NotFoundException.of("Application", id));
 	}
 
 	private void requirePending(AdoptionApplication application) {
 		if (application.getStatus().isFinal()) {
 			throw new ConflictException(
-					"Esta candidatura já foi decidida (" + application.getStatus() + ").");
+					"This application has already been decided (" + application.getStatus() + ").");
 		}
 	}
 }

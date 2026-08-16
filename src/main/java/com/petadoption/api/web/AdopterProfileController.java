@@ -13,12 +13,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Perfil de adotante da pessoa autenticada.
+ * The authenticated person's adopter profile.
  *
- * <p>Fica sob {@code /api/users/me/} porque é um recurso do próprio usuário, e
- * não uma coleção navegável: não existe rota para ler o perfil alheio. Essa é
- * informação sensível — moradia, filhos, quantas pessoas moram na casa — que
- * quem administra um pet só precisa ver no contexto de uma candidatura.
+ * <p>It lives under {@code /api/users/me/} because it is a resource of the user
+ * themselves, not a browsable collection: there is no route to read someone
+ * else's profile. This is sensitive information -- housing, children, how many
+ * people live in the home -- that whoever manages a pet only needs to see in the
+ * context of an application.
  */
 @RestController
 @RequestMapping("/api/users/me/adopter-profile")
@@ -35,7 +36,7 @@ public class AdopterProfileController {
 		return AdopterProfileResponse.from(profiles.getOf(jwt.getSubject()));
 	}
 
-	/** Idempotente: cria na primeira chamada, atualiza nas seguintes. */
+	/** Idempotent: creates on the first call, updates on the ones after. */
 	@PutMapping
 	public AdopterProfileResponse save(@Valid @RequestBody AdopterProfileRequest request,
 			@AuthenticationPrincipal Jwt jwt) {

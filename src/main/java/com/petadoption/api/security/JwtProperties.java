@@ -11,25 +11,25 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 /**
- * Configuração do JWT, tipada e validada.
+ * JWT configuration, typed and validated.
  *
- * <p>Ser um {@code @ConfigurationProperties} validado não é detalhe estético:
- * uma chave de propriedade escrita errada, ou um segredo ausente, derruba a
- * aplicação no boot com mensagem explícita. A alternativa comum — ler a
- * propriedade com {@code @Value} e um valor padrão embutido — falha em silêncio
- * quando a chave não bate, e a aplicação passa a assinar tokens com o padrão
- * sem ninguém perceber.
+ * <p>Being a validated {@code @ConfigurationProperties} is not cosmetic: a
+ * misspelled property key, or a missing secret, brings the application down at
+ * boot with an explicit message. The common alternative -- reading the property
+ * with {@code @Value} and an inline default -- fails silently when the key does
+ * not match, and the application goes on signing tokens with the default without
+ * anyone noticing.
  *
- * @param secret segredo HMAC. HS256 exige chave de 256 bits, daí o mínimo de
- *               32 caracteres.
- * @param ttl    validade do token emitido.
+ * @param secret HMAC secret. HS256 requires a 256-bit key, hence the 32-character
+ *               minimum.
+ * @param ttl    lifetime of the issued token.
  */
 @Validated
 @ConfigurationProperties(prefix = "app.security.jwt")
 public record JwtProperties(
 
-		@NotBlank(message = "app.security.jwt.secret é obrigatório (defina a variável JWT_SECRET)")
-		@Size(min = 32, message = "app.security.jwt.secret precisa de ao menos 32 caracteres para HS256")
+		@NotBlank(message = "app.security.jwt.secret is required (set the JWT_SECRET variable)")
+		@Size(min = 32, message = "app.security.jwt.secret needs at least 32 characters for HS256")
 		String secret,
 
 		Duration ttl) {

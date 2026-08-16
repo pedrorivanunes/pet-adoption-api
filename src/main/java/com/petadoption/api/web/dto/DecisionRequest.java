@@ -2,9 +2,9 @@ package com.petadoption.api.web.dto;
 
 import jakarta.validation.constraints.Size;
 
-/** Justificativa opcional de quem aprova ou recusa uma candidatura. */
+/** Optional reasoning from whoever approves or rejects an application. */
 public record DecisionRequest(
 
-		@Size(max = 1000, message = "justificativa deve ter no máximo 1000 caracteres")
+		@Size(max = 1000, message = "reason must be at most 1000 characters")
 		String note) {
 }

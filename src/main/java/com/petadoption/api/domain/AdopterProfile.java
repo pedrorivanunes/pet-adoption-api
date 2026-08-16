@@ -18,11 +18,11 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.OffsetDateTime;
 
 /**
- * Perfil de quem quer adotar: como vive e o que procura.
+ * The profile of someone who wants to adopt: how they live and what they want.
  *
- * <p>Compartilha a chave primária com o usuário ({@code @MapsId}), o que torna
- * a cardinalidade um-para-um um fato do schema, e não uma regra que a aplicação
- * precisa lembrar de conferir.
+ * <p>It shares its primary key with the user ({@code @MapsId}), which makes the
+ * one-to-one cardinality a fact of the schema rather than a rule the application
+ * has to remember to check.
  */
 @Entity
 @Table(name = "adopter_profiles")
@@ -39,7 +39,7 @@ public class AdopterProfile {
 	@JoinColumn(name = "user_id")
 	private User user;
 
-	// ---------------------------------------------------- situação de vida --
+	// ------------------------------------------------------ living situation --
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "housing_type", nullable = false)
@@ -54,11 +54,11 @@ public class AdopterProfile {
 	@Column(name = "has_other_pets", nullable = false)
 	private boolean hasOtherPets;
 
-	/** Fator impeditivo quando o animal exige cuidados constantes. */
+	/** A blocker when the animal requires constant care. */
 	@Column(name = "has_time_availability", nullable = false)
 	private boolean hasTimeAvailability = true;
 
-	// -------------------------------------------------------- preferências --
+	// ----------------------------------------------------------- preferences --
 
 	@Column(name = "preferred_species")
 	private String preferredSpecies;

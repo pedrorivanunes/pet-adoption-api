@@ -11,15 +11,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 
 /**
- * Responde a uma única pergunta: o que esta pessoa pode fazer nesta organização.
+ * Answers one question only: what this person may do in this organization.
  *
- * <p>Existe isolada de propósito. A autorização sobre recursos de organização é
- * consultada tanto pelo serviço de organizações quanto pelo de pets; deixá-la
- * duplicada nos dois é como as regras divergem — e uma divergência aqui não dá
- * erro, apenas libera acesso que deveria negar.
+ * <p>It sits on its own on purpose. Authorization over organization resources is
+ * consulted by both the organization service and the pet service; duplicating it
+ * across the two is how the rules drift apart -- and a drift here throws no
+ * error, it just grants access that should have been denied.
  *
- * <p>Note que o papel global do usuário ({@code USER}, {@code ADMIN}) não entra
- * na conta: administrar um abrigo não dá poder algum sobre outro.
+ * <p>Note that the user's global role ({@code USER}, {@code ADMIN}) plays no
+ * part: administering one shelter grants no power over another.
  */
 @Component
 public class OrganizationAccess {
@@ -44,17 +44,17 @@ public class OrganizationAccess {
 		return roleOf(organizationId, user).filter(OrgMemberRole.ADMIN::equals).isPresent();
 	}
 
-	/** Qualquer vínculo serve — ADMIN ou STAFF cuidam dos pets da organização. */
+	/** Any membership will do -- ADMIN or STAFF both care for the org's pets. */
 	public void requireMember(Long organizationId, User user) {
 		if (!isMember(organizationId, user)) {
-			throw new AccessDeniedException("Você não faz parte desta organização");
+			throw new AccessDeniedException("You are not a member of this organization");
 		}
 	}
 
-	/** Só ADMIN mexe na organização em si e no seu quadro de membros. */
+	/** Only an ADMIN touches the organization itself and its membership list. */
 	public void requireAdmin(Long organizationId, User user) {
 		if (!isAdmin(organizationId, user)) {
-			throw new AccessDeniedException("Apenas administradores desta organização podem fazer isso");
+			throw new AccessDeniedException("Only administrators of this organization can do that");
 		}
 	}
 }

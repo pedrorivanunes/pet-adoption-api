@@ -1,17 +1,17 @@
 package com.petadoption.api.domain;
 
 /**
- * Papel de uma pessoa dentro de uma organização.
+ * A person's role inside one organization.
  *
- * <p>É diferente de {@link Role}: aquele é global e grosso, este vale apenas
- * para os recursos de uma organização específica. Quem administra um abrigo não
- * ganha poder algum sobre outro.
+ * <p>This is not {@link Role}: that one is global and coarse, this one applies
+ * only to the resources of one specific organization. Administering one shelter
+ * grants no power whatsoever over another.
  */
 public enum OrgMemberRole {
 
-	/** Administra a organização: dados, membros e pets. */
+	/** Administers the organization: its data, its members and its pets. */
 	ADMIN,
 
-	/** Opera o dia a dia: cuida dos pets, mas não mexe na organização nem nos membros. */
+	/** Runs day-to-day work: manages pets, but not the organization or its members. */
 	STAFF
 }

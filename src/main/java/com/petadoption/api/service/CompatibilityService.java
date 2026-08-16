@@ -17,8 +17,8 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * O "quero adotar": pets disponíveis ranqueados por compatibilidade com quem
- * está buscando.
+ * The "I want to adopt" search: available pets ranked by how well they match the
+ * person searching.
  */
 @Service
 public class CompatibilityService {
@@ -42,35 +42,36 @@ public class CompatibilityService {
 	}
 
 	/**
-	 * Ranqueia os pets disponíveis para o adotante autenticado.
+	 * Ranks the available pets for the authenticated adopter.
 	 *
-	 * <p>Ao contrário do score gravado na candidatura, aqui o cálculo é ao vivo:
-	 * a busca precisa refletir o catálogo e as preferências de agora.
+	 * <p>Unlike the score stored on an application, the calculation here is
+	 * live: the search has to reflect the catalogue and the preferences as they
+	 * are now.
 	 *
-	 * <p><strong>Sobre a estratégia:</strong> os pets disponíveis são carregados
-	 * e pontuados em memória. O catálogo de animais disponíveis para adoção é
-	 * pequeno por natureza — centenas, não milhões — e manter a regra num único
-	 * lugar em Java vale mais do que reescrevê-la em SQL para ganhar um tempo
-	 * que ninguém vai sentir. Se um dia crescer a ponto de doer, o caminho é
-	 * materializar o score, não espalhar a regra.
+	 * <p><strong>On the strategy:</strong> available pets are loaded and scored
+	 * in memory. A catalogue of animals up for adoption is small by nature --
+	 * hundreds, not millions -- and keeping the rule in one place in Java is
+	 * worth more than rewriting it in SQL to save time nobody will notice. If it
+	 * ever grows enough to hurt, the answer is to materialise the score, not to
+	 * scatter the rule.
 	 */
 	@Transactional(readOnly = true)
 	public Page<Match> matchesFor(String actorEmail, Pageable pageable) {
 		User actor = users.getByEmail(actorEmail);
 		AdopterProfile profile = profiles.findOf(actor).orElseThrow(() -> new ConflictException(
-				"Preencha seu perfil de adotante para ver os pets mais compatíveis com você."));
+				"Fill in your adopter profile to see the pets that match you best."));
 
 		List<Match> ranked = pets.findByStatus(PetStatus.AVAILABLE, Pageable.unpaged()).getContent().stream()
-				// Não faz sentido oferecer à pessoa um animal que ela mesma cuida.
+				// No point offering someone an animal they already care for.
 				.filter(pet -> !petAccess.canManage(pet, actor))
 				.map(pet -> new Match(pet, calculator.evaluate(pet, profile)))
-				// Fator impeditivo elimina — é o significado dele. Aparecer no
-				// fim da lista seria tratá-lo como pontuação baixa.
+				// A blocker eliminates -- that is what it means. Showing up at
+				// the bottom of the list would treat it as a low score.
 				.filter(match -> !match.compatibility().blocked())
 				.sorted(Comparator
 						.comparingInt((Match match) -> match.compatibility().score()).reversed()
-						// Desempate estável, senão a mesma busca devolve ordens
-						// diferentes e a paginação repete ou pula registros.
+						// A stable tie-break, otherwise the same search returns
+						// different orders and pagination repeats or skips rows.
 						.thenComparing(match -> match.pet().getId()))
 				.toList();
 

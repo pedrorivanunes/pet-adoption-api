@@ -40,10 +40,11 @@ public class AuthController {
 	}
 
 	/**
-	 * A autenticação passa pelo {@link AuthenticationManager} em vez de comparar
-	 * o hash na mão: assim o fluxo herda o tratamento padrão do Spring Security
-	 * (inclusive proteção contra enumeração por tempo de resposta), e a falha
-	 * vira uma AuthenticationException — que o handler traduz para 401.
+	 * Authentication goes through {@link AuthenticationManager} rather than
+	 * comparing the hash by hand: this way the flow inherits Spring Security's
+	 * standard handling (including protection against timing-based account
+	 * enumeration), and a failure becomes an AuthenticationException -- which the
+	 * handler translates into a 401.
 	 */
 	@PostMapping("/login")
 	public TokenResponse login(@Valid @RequestBody LoginRequest request) {

@@ -21,11 +21,11 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
- * Pessoa física com acesso ao sistema.
+ * A person with access to the system.
  *
- * <p>Organização não é usuário e não aparece aqui: quem se autentica é sempre
- * uma pessoa. O poder de agir em nome de uma organização vem do vínculo, não
- * de um papel global.
+ * <p>An organization is not a user and does not appear here: whoever
+ * authenticates is always a person. The power to act on behalf of an
+ * organization comes from the membership, not from a global role.
  */
 @Entity
 @Table(name = "users")
@@ -40,8 +40,8 @@ public class User {
 	@Column(nullable = false)
 	private String name;
 
-	// Sem unique = true no mapeamento: a unicidade real é um índice funcional
-	// sobre lower(email), que o JPA não sabe expressar. Quem garante é o banco.
+	// No unique = true in the mapping: the real uniqueness is a functional index
+	// over lower(email), which JPA cannot express. The database enforces it.
 	@Column(nullable = false)
 	private String email;
 

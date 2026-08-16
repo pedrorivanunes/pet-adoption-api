@@ -1,2 +1,14 @@
+# The project is developed on Windows and built on Linux runners, so line
+# endings are pinned here rather than left to each machine's core.autocrlf.
+# A stray CR inside a `run: |` block reaches the runner's bash as part of the
+# command and fails with an unreadable $'\r' error.
+* text=auto
+
 /mvnw text eol=lf
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sql text eol=lf
+Dockerfile text eol=lf
+
 *.cmd text eol=crlf

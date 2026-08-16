@@ -11,22 +11,22 @@ import java.time.LocalDate;
 
 public record StayRequest(
 
-		@NotNull(message = "tipo da permanência é obrigatório")
+		@NotNull(message = "stay kind is required")
 		StayKind kind,
 
-		@NotBlank(message = "localização é obrigatória")
-		@Size(max = 255, message = "localização deve ter no máximo 255 caracteres")
+		@NotBlank(message = "location is required")
+		@Size(max = 255, message = "location must be at most 255 characters")
 		String location,
 
-		/** Pode ser anterior ao cadastro do pet — resgate quase sempre é. */
-		@NotNull(message = "data de início é obrigatória")
-		@PastOrPresent(message = "a permanência não começa no futuro")
+		/** May predate the pet's registration -- a rescue almost always does. */
+		@NotNull(message = "start date is required")
+		@PastOrPresent(message = "a stay does not start in the future")
 		LocalDate startedOn,
 
-		@Size(max = 1000, message = "observações devem ter no máximo 1000 caracteres")
+		@Size(max = 1000, message = "notes must be at most 1000 characters")
 		String notes,
 
-		/** Organização que assume a guarda; exige vínculo de quem registra. */
+		/** The organization taking custody; requires membership from whoever records it. */
 		Long custodianOrganizationId) {
 
 	public PetHistoryService.StayData toData() {

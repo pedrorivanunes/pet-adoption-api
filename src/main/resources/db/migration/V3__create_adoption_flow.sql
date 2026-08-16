@@ -1,31 +1,31 @@
 -- =========================================================================
--- V3 -- Perfil do adotante, candidaturas e adoções efetivadas.
+-- V3 -- Adopter profile, applications and completed adoptions.
 -- =========================================================================
 
 
 -- =========================================================================
--- PERFIL DO ADOTANTE
+-- ADOPTER PROFILE
 --
--- Situação de vida e preferências ficam na mesma tabela de propósito: na
--- prática são um formulário só, preenchido de uma vez, e sempre lidos juntos
--- pelo cálculo de compatibilidade. Separar em duas tabelas 1:1 com o mesmo
--- usuário adicionaria um join e um endpoint sem comprar nada.
+-- Living situation and preferences share one table on purpose: in practice
+-- they are a single form, filled in at once, and always read together by the
+-- compatibility calculation. Splitting them into two 1:1 tables on the same
+-- user would add a join and an endpoint and buy nothing.
 --
--- A chave primária é o próprio user_id: uma pessoa tem no máximo um perfil, e
--- é o banco quem garante isso, não uma verificação na aplicação.
+-- The primary key is the user_id itself: a person has at most one profile, and
+-- the database is what guarantees that, not a check in the application.
 -- =========================================================================
 
 CREATE TABLE adopter_profiles (
     user_id                      BIGINT      PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
 
-    -- Como essa pessoa vive -- entra nos fatores sociais e impeditivos.
+    -- How this person lives -- feeds the social factors and the blockers.
     housing_type                 VARCHAR(20) NOT NULL,
     has_children                 BOOLEAN     NOT NULL DEFAULT false,
     residents_count              INTEGER,
     has_other_pets               BOOLEAN     NOT NULL DEFAULT false,
     has_time_availability        BOOLEAN     NOT NULL DEFAULT true,
 
-    -- O que essa pessoa procura -- entra na pontuação por característica.
+    -- What this person is looking for -- feeds the per-characteristic scoring.
     preferred_species            VARCHAR(30),
     preferred_breed              VARCHAR(100),
     preferred_size               VARCHAR(20),
@@ -45,11 +45,11 @@ CREATE TABLE adopter_profiles (
 
 
 -- =========================================================================
--- CANDIDATURAS
+-- APPLICATIONS
 --
--- Só pessoa física se candidata: não existe adopter_org_id aqui. Organização
--- é o lado da oferta; quando ela recebe um animal, isso é transferência de
--- guarda, outro evento com outras regras.
+-- Only a private individual applies: there is no adopter_org_id here. An
+-- organization is the supply side; when it takes an animal in, that is a
+-- transfer of custody, a different event with different rules.
 -- =========================================================================
 
 CREATE TABLE adoption_applications (
@@ -67,20 +67,20 @@ CREATE TABLE adoption_applications (
 
     CONSTRAINT ck_application_status CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'CANCELED')),
 
-    -- Se há decisão, há data de decisão, e vice-versa. Sem isto, um registro
-    -- pode afirmar que foi decidido sem dizer quando.
+    -- If there is a decision, there is a decision date, and vice versa.
+    -- Without this, a row could claim it was decided without saying when.
     CONSTRAINT ck_application_decision_consistent CHECK (
         (status = 'PENDING' AND decided_at IS NULL)
         OR (status <> 'PENDING' AND decided_at IS NOT NULL)
     )
 );
 
--- "Apenas um pet pode ser buscado para adoção por vez."
+-- "Only one pet may be sought for adoption at a time."
 --
--- Índice único PARCIAL: a unicidade vale só enquanto o status é PENDING, então
--- candidaturas passadas não impedem uma nova. A aplicação também verifica isso
--- para devolver mensagem clara, mas quem garante de fato é este índice --
--- verificação em código perde para duas requisições simultâneas.
+-- A PARTIAL unique index: uniqueness holds only while the status is PENDING,
+-- so past applications do not block a new one. The application checks this too,
+-- in order to return a clear message, but this index is what actually
+-- guarantees it -- a check in code loses to two simultaneous requests.
 CREATE UNIQUE INDEX ux_applications_one_pending_per_adopter
     ON adoption_applications (adopter_user_id)
     WHERE status = 'PENDING';
@@ -90,14 +90,14 @@ CREATE INDEX idx_applications_adopter ON adoption_applications (adopter_user_id)
 
 
 -- =========================================================================
--- ADOÇÕES EFETIVADAS
+-- COMPLETED ADOPTIONS
 --
--- Registro histórico criado quando uma candidatura é aprovada. É a partir da
--- data daqui que se conta o acompanhamento pós-adoção.
+-- A historical record created when an application is approved. The date here
+-- is what the post-adoption follow-up counts from.
 --
--- Todas as chaves com RESTRICT, ao contrário das candidaturas: candidatura
--- pendente é transitória e some junto com o pet, adoção é histórico e não
--- deve sumir por efeito colateral de um delete.
+-- Every key uses RESTRICT, unlike applications: a pending application is
+-- transient and goes away with the pet, whereas an adoption is history and
+-- should not vanish as a side effect of a delete.
 -- =========================================================================
 
 CREATE TABLE adoptions (
