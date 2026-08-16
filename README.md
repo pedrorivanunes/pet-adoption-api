@@ -360,8 +360,8 @@ properly needs a propose-and-accept flow, since two parties are involved.
 
 ## Academic context
 
-The domain scenario originated in a group assignment for *Prática em Engenharia
-de Software* at PUCRS, which asked for a full-stack application. This repository
+The domain scenario originated in a group assignment for a *Software Engineering*
+course, which asked for a full-stack application. This repository
 is a backend-only rebuild written afterwards, from scratch, to take the same
 domain further than the assignment required — integration tests against a real
 database, authorization driven by relationships, reproducible infrastructure and
